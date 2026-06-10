@@ -25,6 +25,7 @@ import {
 import { PlusCircle, X } from "lucide-react";
 import { useCreateReferralMutation, useUpdateReferralMutation } from "@/lib/api/hooks/useReferrals";
 import { useCompaniesQuery } from "@/lib/api/hooks/useCompanies";
+import { useAuth } from "@/lib/auth/auth-context";
 import type { Referral } from "@/lib/types";
 
 const referralSchema = Yup.object().shape({
@@ -45,6 +46,8 @@ interface ReferralModalProps {
 
 export const ReferralModal = NiceModal.create(({ editingReferral }: ReferralModalProps) => {
   const modal = useModal();
+  const { profile } = useAuth();
+  const isVendor = profile?.role === "vendor";
 
   const createMutation = useCreateReferralMutation();
   const updateMutation = useUpdateReferralMutation();
@@ -63,7 +66,7 @@ export const ReferralModal = NiceModal.create(({ editingReferral }: ReferralModa
       referenceLinks: editingReferral?.reference_links ? [...editingReferral.reference_links] : ([] as string[]),
       hostName: editingReferral?.host_name || "",
       hostEmail: editingReferral?.host_email || "",
-      companyId: editingReferral?.company_id || "",
+      companyId: editingReferral?.company_id || (isVendor ? (profile?.last_used_company_id || profile?.assignedCompanies?.[0]?.id || "") : ""),
     },
     validationSchema: referralSchema,
     onSubmit: async (values) => {
@@ -228,7 +231,7 @@ export const ReferralModal = NiceModal.create(({ editingReferral }: ReferralModa
               ) : null}
             </div>
           </div>
-          {!editingReferral && (
+          {!editingReferral && !isVendor && (
             <div className="space-y-2">
               <Label htmlFor="companyId">Company</Label>
               <Select

@@ -14,8 +14,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (!loading && !user) {
       router.push("/auth/login");
     }
-    if (!loading && user && profile?.must_change_password && pathname !== "/profile") {
-      router.push("/profile");
+    if (!loading && user && profile?.must_change_password && pathname !== "/auth/set-password") {
+      router.push("/auth/set-password");
     }
   }, [user, profile?.must_change_password, loading, pathname, router]);
 

@@ -12,6 +12,8 @@ export default function Home() {
     if (loading) return;
     if (!user) {
       router.push("/auth/login");
+    } else if (profile?.must_change_password) {
+      router.push("/auth/set-password");
     } else if (profile?.role === "admin") {
       router.push("/dashboard");
     } else if (profile?.last_used_company_id) {

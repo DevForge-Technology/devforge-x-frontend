@@ -9,6 +9,8 @@ import { toProfile, type Profile } from "@/lib/types";
 import type { User, Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
+import NiceModal from '@ebay/nice-modal-react';
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
@@ -123,7 +125,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, profile, session, loading, signIn, signOut, refreshProfile }}>
-      {children}
+      <NiceModal.Provider>
+        {children}
+      </NiceModal.Provider>
     </AuthContext.Provider>
   );
 }

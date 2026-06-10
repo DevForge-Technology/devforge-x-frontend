@@ -38,7 +38,7 @@ export default function LoginPage() {
         setLoading(false);
       } else {
         await new Promise((resolve) => setTimeout(resolve, 500));
-        router.push(mustChangePassword ? "/profile" : "/dashboard");
+        router.push(mustChangePassword ? "/auth/set-password" : "/dashboard");
       }
     },
   });
