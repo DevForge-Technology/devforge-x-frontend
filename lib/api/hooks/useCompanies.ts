@@ -17,7 +17,7 @@ export function useMyCompaniesQuery() {
 }
 
 export function useCreateCompanyMutation(
-  options?: UseMutationOptions<{ company: Company }, Error, Partial<Company> & { vendorIds?: string[] }>,
+  options?: UseMutationOptions<{ company: Company }, Error, Partial<Company> & { vendorId?: string }>,
 ) {
   const qc = useQueryClient();
   return useMutation({
@@ -31,7 +31,7 @@ export function useUpdateCompanyMutation(
   options?: UseMutationOptions<
     { company: Company },
     Error,
-    { id: string } & Partial<Company> & { vendorIds?: string[] }
+    { id: string } & Partial<Company> & { vendorId?: string }
   >,
 ) {
   const qc = useQueryClient();

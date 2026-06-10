@@ -17,12 +17,12 @@ export const companiesBuilder = {
     return data;
   },
 
-  create: async (payload: Partial<Company> & { vendorIds?: string[] }) => {
+  create: async (payload: Partial<Company> & { vendorId?: string }) => {
     const { data } = await apiService.post<{ company: Company }>('/companies', payload);
     return data;
   },
 
-  update: async (id: string, payload: Partial<Company> & { vendorIds?: string[] }) => {
+  update: async (id: string, payload: Partial<Company> & { vendorId?: string }) => {
     const { data } = await apiService.put<{ company: Company }>(`/companies/${id}`, payload);
     return data;
   },

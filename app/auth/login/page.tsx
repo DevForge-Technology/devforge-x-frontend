@@ -8,30 +8,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Shield, AlertCircle } from "lucide-react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+
+const loginSchema = Yup.object().shape({
+  email: Yup.string().email("Invalid email address").required("Email is required"),
+  password: Yup.string().required("Password is required"),
+});
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+      password: "",
+    },
+    validationSchema: loginSchema,
+    onSubmit: async (values) => {
+      setError(null);
+      setLoading(true);
 
-    const { error, mustChangePassword } = await signIn(email, password);
-    if (error) {
-      setError(error);
-      setLoading(false);
-    } else {
-      // Small delay to ensure cookies are set before redirect
-      await new Promise(resolve => setTimeout(resolve, 500));
-      router.push(mustChangePassword ? "/profile" : "/dashboard");
-    }
-  };
+      const { error: signInError, mustChangePassword } = await signIn(values.email, values.password);
+      if (signInError) {
+        setError(signInError);
+        setLoading(false);
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        router.push(mustChangePassword ? "/profile" : "/dashboard");
+      }
+    },
+  });
 
   return (
     <div className="min-h-screen grid bg-white lg:grid-cols-[minmax(420px,60%)_1fr]">
@@ -46,7 +56,6 @@ export default function LoginPage() {
       <div className="flex min-h-screen items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            
             <h1 className="text-2xl font-bold tracking-tight text-foreground">DevForge[x]</h1>
             <p className="text-muted-foreground mt-1">Sign in to your workspace</p>
           </div>
@@ -57,7 +66,7 @@ export default function LoginPage() {
               <CardDescription>Enter your credentials to continue</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={formik.handleSubmit} className="space-y-4">
                 {error && (
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                     <AlertCircle className="h-4 w-4 shrink-0" />
@@ -68,25 +77,33 @@ export default function LoginPage() {
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     placeholder="you@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
                     className="h-10"
                   />
+                  {formik.touched.email && formik.errors.email ? (
+                    <div className="text-xs text-destructive">{formik.errors.email}</div>
+                  ) : null}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
+                    name="password"
                     type="password"
                     placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
                     className="h-10"
                   />
+                  {formik.touched.password && formik.errors.password ? (
+                    <div className="text-xs text-destructive">{formik.errors.password}</div>
+                  ) : null}
                 </div>
                 <Button type="submit" className="w-full h-10" disabled={loading}>
                   {loading ? "Signing in..." : "Sign in"}

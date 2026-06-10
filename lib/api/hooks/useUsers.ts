@@ -25,7 +25,7 @@ export function useMeQuery() {
 }
 
 export function useCreateUserMutation(
-  options?: UseMutationOptions<{ user: User }, Error, { name: string; email: string; password: string }>,
+  options?: UseMutationOptions<{ user: User }, Error, { name: string; email: string; companyIds?: string[] }>,
 ) {
   const qc = useQueryClient();
   return useMutation({

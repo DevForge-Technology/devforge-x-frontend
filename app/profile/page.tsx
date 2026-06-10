@@ -13,71 +13,74 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Building2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+
+const profileSchema = Yup.object().shape({
+  name: Yup.string().required("Name is required"),
+  email: Yup.string().email("Invalid email address").required("Email is required"),
+});
+
+const passwordSchema = Yup.object().shape({
+  currentPassword: Yup.string().required("Current password is required"),
+  newPassword: Yup.string()
+    .min(6, "Password must be at least 6 characters")
+    .required("New password is required"),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref("newPassword")], "New passwords do not match")
+    .required("Confirm new password is required"),
+});
 
 export default function ProfilePage() {
   const { profile, refreshProfile } = useAuth();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-
-  useEffect(() => {
-    if (profile) {
-      setName(profile.name);
-      setEmail(profile.email);
-    }
-  }, [profile]);
 
   const isVendor = profile?.role === "vendor";
   const assignedCompanies = profile?.assignedCompanies ?? [];
   const noCompany = isVendor && assignedCompanies.length === 0;
   const mustChangePassword = profile?.must_change_password === true;
 
-  async function handleSaveProfile() {
-    if (!name || !email) {
-      toast.error("Name and email are required");
-      return;
-    }
-    setSaving(true);
-    try {
-      await updateProfile(name, email);
-      await refreshProfile();
-      toast.success("Profile updated");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update profile");
-    }
-    setSaving(false);
-  }
+  const profileForm = useFormik({
+    initialValues: {
+      name: profile?.name || "",
+      email: profile?.email || "",
+    },
+    enableReinitialize: true,
+    validationSchema: profileSchema,
+    onSubmit: async (values) => {
+      setSaving(true);
+      try {
+        await updateProfile(values.name, values.email);
+        await refreshProfile();
+        toast.success("Profile updated");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to update profile");
+      }
+      setSaving(false);
+    },
+  });
 
-  async function handleChangePassword() {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error("All password fields are required");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("New passwords do not match");
-      return;
-    }
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-    setChangingPassword(true);
-    try {
-      await changePassword(currentPassword, newPassword);
-      await refreshProfile();
-      toast.success("Password changed successfully");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to change password");
-    }
-    setChangingPassword(false);
-  }
+  const passwordForm = useFormik({
+    initialValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+    validationSchema: passwordSchema,
+    onSubmit: async (values, { resetForm }) => {
+      setChangingPassword(true);
+      try {
+        await changePassword(values.currentPassword, values.newPassword);
+        await refreshProfile();
+        toast.success("Password changed successfully");
+        resetForm();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to change password");
+      }
+      setChangingPassword(false);
+    },
+  });
 
   return (
     <AppShell>
@@ -110,22 +113,47 @@ export default function ProfilePage() {
             <CardTitle className="text-base">Personal Information</CardTitle>
             <CardDescription>Update your name and email address</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Your email" type="email" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-muted-foreground text-xs">Role</Label>
-              <Badge variant="secondary" className="capitalize">{profile?.role}</Badge>
-            </div>
-            <Button onClick={handleSaveProfile} disabled={saving}>
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
+          <CardContent>
+            <form onSubmit={profileForm.handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={profileForm.values.name}
+                  onChange={profileForm.handleChange}
+                  onBlur={profileForm.handleBlur}
+                  placeholder="Your name"
+                />
+                {profileForm.touched.name && profileForm.errors.name ? (
+                  <div className="text-xs text-destructive">{profileForm.errors.name}</div>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  value={profileForm.values.email}
+                  onChange={profileForm.handleChange}
+                  onBlur={profileForm.handleBlur}
+                  placeholder="Your email"
+                  type="email"
+                />
+                {profileForm.touched.email && profileForm.errors.email ? (
+                  <div className="text-xs text-destructive">{profileForm.errors.email}</div>
+                ) : null}
+              </div>
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Role</Label>
+                <div>
+                  <Badge variant="secondary" className="capitalize">{profile?.role}</Badge>
+                </div>
+              </div>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
@@ -134,22 +162,54 @@ export default function ProfilePage() {
             <CardTitle className="text-base">Change Password</CardTitle>
             <CardDescription>Update your account password</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Current Password</Label>
-              <Input value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} type="password" />
-            </div>
-            <div className="space-y-2">
-              <Label>New Password</Label>
-              <Input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} type="password" />
-            </div>
-            <div className="space-y-2">
-              <Label>Confirm New Password</Label>
-              <Input value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} type="password" />
-            </div>
-            <Button onClick={handleChangePassword} disabled={changingPassword}>
-              {changingPassword ? "Changing..." : "Change Password"}
-            </Button>
+          <CardContent>
+            <form onSubmit={passwordForm.handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <Input
+                  id="currentPassword"
+                  name="currentPassword"
+                  value={passwordForm.values.currentPassword}
+                  onChange={passwordForm.handleChange}
+                  onBlur={passwordForm.handleBlur}
+                  type="password"
+                />
+                {passwordForm.touched.currentPassword && passwordForm.errors.currentPassword ? (
+                  <div className="text-xs text-destructive">{passwordForm.errors.currentPassword}</div>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  name="newPassword"
+                  value={passwordForm.values.newPassword}
+                  onChange={passwordForm.handleChange}
+                  onBlur={passwordForm.handleBlur}
+                  type="password"
+                />
+                {passwordForm.touched.newPassword && passwordForm.errors.newPassword ? (
+                  <div className="text-xs text-destructive">{passwordForm.errors.newPassword}</div>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={passwordForm.values.confirmPassword}
+                  onChange={passwordForm.handleChange}
+                  onBlur={passwordForm.handleBlur}
+                  type="password"
+                />
+                {passwordForm.touched.confirmPassword && passwordForm.errors.confirmPassword ? (
+                  <div className="text-xs text-destructive">{passwordForm.errors.confirmPassword}</div>
+                ) : null}
+              </div>
+              <Button type="submit" disabled={changingPassword}>
+                {changingPassword ? "Changing..." : "Change Password"}
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
