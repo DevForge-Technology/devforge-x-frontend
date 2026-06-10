@@ -1,0 +1,65 @@
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+const publicPaths = ["/auth/login"];
+
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            res.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const pathname = req.nextUrl.pathname;
+
+  if (publicPaths.some((p) => pathname.startsWith(p))) {
+    return res;
+  }
+
+  if (!user) {
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = "/auth/login";
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  const role = user.user_metadata?.role as string | undefined;
+
+  const adminOnlyPaths = ["/vendors", "/companies"];
+  if (adminOnlyPaths.some((p) => pathname.startsWith(p))) {
+    if (role !== "admin") {
+      const redirectUrl = req.nextUrl.clone();
+      redirectUrl.pathname = "/dashboard";
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
+  if (role === "vendor" && pathname !== "/profile") {
+    const lastUsedCompany = user.user_metadata?.last_used_company_id;
+    if (!lastUsedCompany) {
+      const redirectUrl = req.nextUrl.clone();
+      redirectUrl.pathname = "/profile";
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
+  return res;
+}
+
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
