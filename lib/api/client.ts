@@ -20,26 +20,26 @@ export async function resetVendorPassword(vendorId: string, newPassword: string)
   return usersBuilder.resetPassword(vendorId, newPassword);
 }
 
-export async function createCompany(data: Partial<Company> & { vendor_ids?: string[] }) {
+export async function createCompany(data: Partial<Company> & { vendor_id?: string }) {
   const { company } = await companiesBuilder.create({
     name: data.name!,
     description: data.description ?? undefined,
     logo: data.logo ?? undefined,
     accentColor: data.accent_color ?? undefined,
     status: data.status,
-    vendorIds: data.vendor_ids,
+    vendorId: data.vendor_id,
   });
   return { company: toCompany(company) };
 }
 
-export async function updateCompany(id: string, data: Partial<Company> & { vendor_ids?: string[] }) {
+export async function updateCompany(id: string, data: Partial<Company> & { vendor_id?: string }) {
   const { company } = await companiesBuilder.update(id, {
     name: data.name,
     description: data.description ?? undefined,
     logo: data.logo ?? undefined,
     accentColor: data.accent_color ?? undefined,
     status: data.status,
-    vendorIds: data.vendor_ids,
+    vendorId: data.vendor_id,
   });
   return { company: toCompany(company) };
 }
@@ -77,9 +77,14 @@ export async function deleteReferral(id: string) {
   return referralsBuilder.delete(id);
 }
 
-export async function getReferrals(params?: Record<string, string>) {
+export async function getReferrals(params?: Record<string, string | number>) {
   const data = await referralsBuilder.list(params);
-  return { referrals: data.referrals.map(toReferral) };
+  return {
+    referrals: data.referrals.map(toReferral),
+    total: data.total,
+    page: data.page,
+    pageSize: data.pageSize,
+  };
 }
 
 export async function getVendors(params?: { search?: string; page?: number; page_size?: number }) {

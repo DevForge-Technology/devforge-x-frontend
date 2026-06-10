@@ -48,14 +48,21 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  if (role === "vendor" && pathname !== "/profile") {
-    const lastUsedCompany = user.user_metadata?.last_used_company_id;
-    if (!lastUsedCompany) {
-      const redirectUrl = req.nextUrl.clone();
-      redirectUrl.pathname = "/profile";
-      return NextResponse.redirect(redirectUrl);
-    }
+  const mustChangePassword = user.user_metadata?.must_change_password === true;
+
+  if (mustChangePassword && pathname !== "/auth/set-password") {
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = "/auth/set-password";
+    return NextResponse.redirect(redirectUrl);
   }
+
+  if (!mustChangePassword && pathname === "/auth/set-password") {
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = "/dashboard";
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // No redirect for vendors without lastUsedCompany, they default to first company gracefully
 
   return res;
 }
