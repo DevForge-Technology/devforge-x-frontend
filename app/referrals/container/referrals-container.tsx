@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, Input } from "@/shared/ui";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -13,14 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table } from "@/shared/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { Plus, Search, Trash2, Pencil, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -28,8 +23,8 @@ import NiceModal from "@ebay/nice-modal-react";
 import { useReferralsQuery, useDeleteReferralMutation } from "@/lib/api/hooks/useReferrals";
 import { useCompaniesQuery } from "@/lib/api/hooks/useCompanies";
 import { useUsersQuery } from "@/lib/api/hooks/useUsers";
+import type { ColumnDef } from "@/shared/ui/Table/type";
 import { ReferralModal } from "../components/referral-modal";
-import { CommonPagination } from "@/components/shared/common-pagination";
 import { toReferral, toCompany, toProfile } from "@/lib/types";
 import type { Referral, Company, Profile } from "@/lib/types";
 
@@ -42,7 +37,15 @@ export function ReferralsContainer() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterCompany, setFilterCompany] = useState<string>("all");
   const [filterVendor, setFilterVendor] = useState<string>("all");
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [selectedVendor, setSelectedVendor] = useState<Profile | null>(null);
   const [page, setPage] = useState(1);
+
+  // Search filter states
+  const [companySearch, setCompanySearch] = useState("");
+  const [companyOpen, setCompanyOpen] = useState(false);
+  const [vendorSearch, setVendorSearch] = useState("");
+  const [vendorOpen, setVendorOpen] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -63,6 +66,9 @@ export function ReferralsContainer() {
     page,
     page_size: PAGE_SIZE,
   };
+  if (profile?.last_used_company_id) {
+    params.workspace_id = profile.last_used_company_id;
+  }
   if (debouncedSearch) params.search = debouncedSearch;
   if (filterCompany && filterCompany !== "all") params.company_id = filterCompany;
   if (filterVendor && filterVendor !== "all") params.vendor_id = filterVendor;
@@ -73,18 +79,31 @@ export function ReferralsContainer() {
 
   // Query filters if admin
   const { data: companiesData } = useCompaniesQuery(
-    isAdmin ? { page: 1, page_size: 100 } : undefined
+    isAdmin ? { search: companySearch || undefined, page: 1, page_size: 25 } : undefined,
+    { enabled: isAdmin }
   );
   const { data: usersData } = useUsersQuery(
-    isAdmin ? { page: 1, page_size: 100 } : undefined
+    isAdmin ? { search: vendorSearch || undefined, page: 1, page_size: 25 } : undefined,
+    { enabled: isAdmin }
   );
 
   const referrals = (data?.referrals || []).map(toReferral);
   const total = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const companies = (companiesData?.companies || []).map(toCompany);
-  const vendors = (usersData?.users || []).map(toProfile);
+  const rawCompanies = (companiesData?.companies || []).map(toCompany);
+  const rawVendors = (usersData?.users || []).map(toProfile);
+
+  // Make sure currently selected item is in the dropdown list even if it is not in the first page of search results
+  const companies:Company[] = [...rawCompanies];
+  if (selectedCompany && !companies.some((c) => c.id === selectedCompany.id)) {
+    companies.push(selectedCompany);
+  }
+
+  const vendors = [...rawVendors];
+  if (selectedVendor && !vendors.some((v) => v.id === selectedVendor.id)) {
+    vendors.push(selectedVendor);
+  }
 
   function openCreate() {
     NiceModal.show(ReferralModal);
@@ -135,119 +154,216 @@ export function ReferralsContainer() {
             </div>
             {isAdmin && (
               <>
-                <Select value={filterCompany} onValueChange={setFilterCompany}>
-                  <SelectTrigger className="w-44">
-                    <SelectValue placeholder="All Companies" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Companies</SelectItem>
-                    {companies.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={filterVendor} onValueChange={setFilterVendor}>
-                  <SelectTrigger className="w-44">
-                    <SelectValue placeholder="All Vendors" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Vendors</SelectItem>
-                    {vendors.map((v: any) => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Company Search Filter */}
+                <Popover open={companyOpen} onOpenChange={setCompanyOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-44 justify-between font-normal text-sm border-slate-200">
+                      <span className="truncate">
+                        {filterCompany !== "all" && selectedCompany
+                          ? selectedCompany.name
+                          : "All Companies"}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Search company..."
+                        value={companySearch}
+                        onValueChange={setCompanySearch}
+                      />
+                      <CommandList>
+                        <CommandEmpty>No companies found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="all"
+                            onSelect={() => {
+                              setFilterCompany("all");
+                              setSelectedCompany(null);
+                              setCompanyOpen(false);
+                            }}
+                          >
+                            <Check className={`mr-2 h-4 w-4 ${filterCompany === "all" ? "opacity-100" : "opacity-0"}`} />
+                            All Companies
+                          </CommandItem>
+                          {companies.map((c) => (
+                            <CommandItem
+                              key={c.id}
+                              value={c.id}
+                              onSelect={() => {
+                                setFilterCompany(c.id);
+                                setSelectedCompany(c);
+                                setCompanyOpen(false);
+                              }}
+                            >
+                              <Check className={`mr-2 h-4 w-4 ${filterCompany === c.id ? "opacity-100" : "opacity-0"}`} />
+                              <span className="truncate">{c.name}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Vendor Search Filter */}
+                <Popover open={vendorOpen} onOpenChange={setVendorOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-44 justify-between font-normal text-sm border-slate-200">
+                      <span className="truncate">
+                        {filterVendor !== "all" && selectedVendor
+                          ? selectedVendor.name
+                          : "All Vendors"}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Search vendor..."
+                        value={vendorSearch}
+                        onValueChange={setVendorSearch}
+                      />
+                      <CommandList>
+                        <CommandEmpty>No vendors found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="all"
+                            onSelect={() => {
+                              setFilterVendor("all");
+                              setSelectedVendor(null);
+                              setVendorOpen(false);
+                            }}
+                          >
+                            <Check className={`mr-2 h-4 w-4 ${filterVendor === "all" ? "opacity-100" : "opacity-0"}`} />
+                            All Vendors
+                          </CommandItem>
+                          {vendors.map((v) => (
+                            <CommandItem
+                              key={v.id}
+                              value={v.id}
+                              onSelect={() => {
+                                setFilterVendor(v.id);
+                                setSelectedVendor(v);
+                                setVendorOpen(false);
+                              }}
+                            >
+                              <Check className={`mr-2 h-4 w-4 ${filterVendor === v.id ? "opacity-100" : "opacity-0"}`} />
+                              <span className="truncate">{v.name}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </>
             )}
           </div>
         </CardHeader>
         <CardContent>
-          {loading && referrals.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Loading referrals...</p>
-          ) : referrals.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              {search ? "No referrals match your search" : "No referrals yet. Create one to get started."}
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Product Info</TableHead>
-                    <TableHead>Reference Links</TableHead>
-                    <TableHead>Host</TableHead>
-                    {isAdmin && <TableHead>Vendor</TableHead>}
-                    {isAdmin && <TableHead>Company</TableHead>}
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {referrals.map((ref: any) => (
-                    <TableRow key={ref.id}>
-                      <TableCell className="font-medium">{ref.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{ref.email}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{ref.product_info}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {ref.reference_links.slice(0, 2).map((link: any, i: any) => (
-                            <Badge key={i} variant="secondary" className="text-xs gap-1 max-w-[120px]">
-                              <LinkIcon className="h-3 w-3 shrink-0" />
-                              <span className="truncate">{link}</span>
-                            </Badge>
-                          ))}
-                          {ref.reference_links.length > 2 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{ref.reference_links.length - 2}
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {ref.host_name || "-"}
-                      </TableCell>
-                      {isAdmin && <TableCell>{ref.vendor_name}</TableCell>}
-                      {isAdmin && <TableCell>{ref.company_name}</TableCell>}
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(ref.created_at), "MMM d, yyyy")}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(ref)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => handleDelete(ref.id)}
-                            disabled={deleteMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          {(() => {
+            const referralColumns: ColumnDef<Referral>[] = [
+              {
+                key: "name",
+                header: "Name",
+                render: (ref) => <span className="font-medium">{ref.name}</span>,
+              },
+              {
+                key: "email",
+                header: "Email",
+                render: (ref) => <span className="text-muted-foreground">{ref.email}</span>,
+              },
+              {
+                key: "product_info",
+                header: "Product Info",
+                render: (ref) => <span className="max-w-[200px] truncate block">{ref.product_info}</span>,
+              },
+              {
+                key: "reference_links",
+                header: "Reference Links",
+                render: (ref) => (
+                  <div className="flex flex-wrap gap-1">
+                    {ref.reference_links.slice(0, 2).map((link: string, i: number) => (
+                      <Badge key={i} variant="secondary" className="text-xs gap-1 max-w-[120px]">
+                        <LinkIcon className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{link}</span>
+                      </Badge>
+                    ))}
+                    {ref.reference_links.length > 2 && (
+                      <Badge variant="secondary" className="text-xs">
+                        +{ref.reference_links.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                key: "host_name",
+                header: "Host",
+                render: (ref) => <span className="text-muted-foreground text-sm">{ref.host_name || "-"}</span>,
+              },
+              ...(isAdmin
+                ? [
+                    {
+                      key: "vendor_name",
+                      header: "Vendor",
+                      render: (ref: Referral) => ref.vendor_name,
+                    },
+                    {
+                      key: "company_name",
+                      header: "Company",
+                      render: (ref: Referral) => ref.company_name,
+                    },
+                  ] as ColumnDef<Referral>[]
+                : []),
+              {
+                key: "created_at",
+                header: "Created",
+                render: (ref) => format(new Date(ref.created_at), "MMM d, yyyy"),
+              },
+              {
+                key: "actions",
+                header: "Actions",
+                align: "right",
+                render: (ref) => (
+                  <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(ref)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(ref.id)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ),
+              },
+            ];
 
-          <CommonPagination
-            page={page}
-            totalPages={totalPages}
-            totalItems={total}
-            loading={loading}
-            onPageChange={setPage}
-            itemName="referrals"
-          />
+            return (
+              <Table<Referral>
+                columns={referralColumns}
+                data={referrals}
+                keyExtractor={(ref) => ref.id}
+                page={page}
+                totalPages={totalPages}
+                totalItems={total}
+                onPageChange={setPage}
+                itemName="referrals"
+                loading={loading}
+                emptyMessage={search ? "No referrals match your search" : "No referrals yet. Create one to get started."}
+              />
+            );
+          })()}
+
+   
         </CardContent>
       </Card>
     </div>

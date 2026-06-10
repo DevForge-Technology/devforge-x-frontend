@@ -2,25 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, Input, Table } from "@/shared/ui";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Building2, KeyRound, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import NiceModal from "@ebay/nice-modal-react";
 import { useUsersQuery, useDeleteUserMutation } from "@/lib/api/hooks/useUsers";
+import type { ColumnDef } from "@/shared/ui/Table/type";
 import { VendorModal } from "../components/vendor-modal";
 import { ResetPasswordModal } from "../components/reset-password-modal";
-import { CommonPagination } from "@/components/shared/common-pagination";
 import { toProfile } from "@/lib/types";
 import type { Profile } from "@/lib/types";
 
@@ -49,8 +40,10 @@ export function VendorsContainer() {
 
   const deleteMutation = useDeleteUserMutation();
 
+  type VendorRow = Profile & { companies: Array<{ id: string; name: string }> };
+
   const rawUsers = data?.users || [];
-  const vendors = rawUsers.map((u: any) => {
+  const vendors: VendorRow[] = rawUsers.map((u: any) => {
     const p = toProfile(u);
     return {
       ...p,
@@ -107,71 +100,69 @@ export function VendorsContainer() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading && vendors.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Loading vendors...</p>
-          ) : vendors.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              {search ? "No vendors match your search" : "No vendors yet. Create one to get started."}
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Assigned Companies</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {vendors.map((vendor: any) => (
-                  <TableRow key={vendor.id}>
-                    <TableCell className="font-medium">{vendor.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{vendor.email}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {vendor.companies.length === 0 ? (
-                          <span className="text-xs text-muted-foreground">None</span>
-                        ) : (
-                          vendor.companies.map((company: any) => (
-                            <Badge key={company.id} variant="secondary" className="gap-1 text-xs">
-                              <Building2 className="h-3 w-3" />
-                              {company.name}
-                            </Badge>
-                          ))
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(vendor.created_at), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(vendor.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-
-          <CommonPagination
+          <Table<VendorRow>
+            columns={[
+              {
+                key: "name",
+                header: "Name",
+                render: (vendor) => <span className="font-medium">{vendor.name}</span>,
+              },
+              {
+                key: "email",
+                header: "Email",
+                render: (vendor) => <span className="text-muted-foreground">{vendor.email}</span>,
+              },
+              {
+                key: "companies",
+                header: "Assigned Companies",
+                render: (vendor) => (
+                  <div className="flex flex-wrap gap-1">
+                    {vendor.companies.length === 0 ? (
+                      <span className="text-xs text-muted-foreground">None</span>
+                    ) : (
+                      vendor.companies.map((company: any) => (
+                        <Badge key={company.id} variant="secondary" className="gap-1 text-xs">
+                          <Building2 className="h-3 w-3" />
+                          {company.name}
+                        </Badge>
+                      ))
+                    )}
+                  </div>
+                ),
+              },
+              {
+                key: "created_at",
+                header: "Created",
+                render: (vendor) => <span className="text-muted-foreground">{format(new Date(vendor.created_at), "MMM d, yyyy")}</span>,
+              },
+              {
+                key: "actions",
+                header: "Actions",
+                align: "right",
+                render: (vendor) => (
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(vendor.id)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ),
+              },
+            ]}
+            data={vendors}
+            keyExtractor={(vendor) => vendor.id}
             page={page}
             totalPages={totalPages}
             totalItems={total}
-            loading={loading}
             onPageChange={setPage}
             itemName="vendors"
+            loading={loading}
+            emptyMessage={search ? "No vendors match your search" : "No vendors yet. Create one to get started."}
           />
         </CardContent>
       </Card>

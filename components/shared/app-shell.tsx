@@ -22,10 +22,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/10 via-slate-50 to-white flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 rounded-3xl border border-slate-200/70 bg-white/90 p-8 shadow-2xl shadow-slate-200/30">
-          <div className="h-8 w-8 rounded-lg bg-primary animate-pulse" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }

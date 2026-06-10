@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -12,21 +12,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/shared/ui";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { PlusCircle, X } from "lucide-react";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { PlusCircle, X, Check, ChevronsUpDown } from "lucide-react";
 import { useCreateReferralMutation, useUpdateReferralMutation } from "@/lib/api/hooks/useReferrals";
 import { useCompaniesQuery } from "@/lib/api/hooks/useCompanies";
 import { useAuth } from "@/lib/auth/auth-context";
-import type { Referral } from "@/lib/types";
+import { toCompany } from "@/lib/types";
+import type { Referral, Company } from "@/lib/types";
 
 const referralSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
@@ -52,11 +55,32 @@ export const ReferralModal = NiceModal.create(({ editingReferral }: ReferralModa
   const createMutation = useCreateReferralMutation();
   const updateMutation = useUpdateReferralMutation();
 
-  const { data: companiesData } = useCompaniesQuery({
-    page: 1,
-    page_size: 100,
-  });
-  const companies = (companiesData?.companies || []);
+  const [companySearch, setCompanySearch] = useState("");
+  const [companyOpen, setCompanyOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(
+    editingReferral?.company_id
+      ? {
+          id: editingReferral.company_id,
+          name: editingReferral.company_name || "",
+          description: null,
+          logo: null,
+          accent_color: null,
+          status: "active",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      : null
+  );
+
+  const { data: companiesData } = useCompaniesQuery(
+    !isVendor ? { search: companySearch || undefined, page: 1, page_size: 25 } : undefined,
+    { enabled: !isVendor }
+  );
+  const rawCompanies = (companiesData?.companies || []).map(toCompany);
+  const companies:Company[] = [...rawCompanies];
+  if (selectedCompany && !companies.some((c) => c.id === selectedCompany.id)) {
+    companies.push(selectedCompany);
+  }
 
   const formik = useFormik({
     initialValues: {
@@ -232,25 +256,50 @@ export const ReferralModal = NiceModal.create(({ editingReferral }: ReferralModa
             </div>
           </div>
           {!editingReferral && !isVendor && (
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col">
               <Label htmlFor="companyId">Company</Label>
-              <Select
-                value={formik.values.companyId}
-                onValueChange={(val) => formik.setFieldValue("companyId", val)}
-              >
-                <SelectTrigger id="companyId">
-                  <SelectValue placeholder="Select company" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companies.map((c: any) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={companyOpen} onOpenChange={setCompanyOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full justify-between font-normal text-sm border-slate-200">
+                    <span className="truncate">
+                      {formik.values.companyId && selectedCompany
+                        ? selectedCompany.name
+                        : "Select company"}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Search company..."
+                      value={companySearch}
+                      onValueChange={setCompanySearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>No companies found.</CommandEmpty>
+                      <CommandGroup>
+                        {companies.map((c) => (
+                          <CommandItem
+                            key={c.id}
+                            value={c.id}
+                            onSelect={() => {
+                              formik.setFieldValue("companyId", c.id);
+                              setSelectedCompany(c);
+                              setCompanyOpen(false);
+                            }}
+                          >
+                            <Check className={`mr-2 h-4 w-4 ${formik.values.companyId === c.id ? "opacity-100" : "opacity-0"}`} />
+                            <span className="truncate">{c.name}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               {formik.touched.companyId && formik.errors.companyId ? (
-                <div className="text-xs text-destructive">{formik.errors.companyId}</div>
+                <div className="text-xs text-destructive mt-1">{formik.errors.companyId}</div>
               ) : null}
             </div>
           )}

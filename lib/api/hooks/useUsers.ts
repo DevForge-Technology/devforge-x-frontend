@@ -2,10 +2,14 @@ import { useMutation, useQuery, useQueryClient, UseMutationOptions } from '@tans
 import { usersBuilder } from '../builders/users';
 import { User } from '../types';
 
-export function useUsersQuery(params?: { search?: string; page?: number; page_size?: number }) {
+export function useUsersQuery(
+  params?: { search?: string; page?: number; page_size?: number },
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: ['users', params],
     queryFn: () => usersBuilder.list(params),
+    ...options,
   });
 }
 

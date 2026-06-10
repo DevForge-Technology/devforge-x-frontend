@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
-import { updateWorkspace } from "@/lib/api/client";
+import { useUpdateWorkspaceMutation } from "@/lib/api/hooks/useCompanies";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Company } from "@/lib/types";
 import {
   Dialog,
@@ -20,7 +21,9 @@ export function WorkspaceSwitcher() {
   const { profile, refreshProfile } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+
+  const updateWorkspaceMutation = useUpdateWorkspaceMutation();
 
   useEffect(() => {
     setCompanies(profile?.assignedCompanies ?? []);
@@ -38,15 +41,16 @@ export function WorkspaceSwitcher() {
   }
 
   const handleSwitch = async (companyId: string) => {
-    setLoading(true);
     try {
-      await updateWorkspace(companyId);
+      await updateWorkspaceMutation.mutateAsync(companyId);
       await refreshProfile();
+      queryClient.invalidateQueries({ queryKey: ['companies', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: ['users', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['referrals'] });
       setOpen(false);
     } catch {
       // error handled silently
     }
-    setLoading(false);
   };
 
   return (
@@ -96,7 +100,7 @@ export function WorkspaceSwitcher() {
                 variant="ghost"
                 className="w-full justify-start gap-3 h-10"
                 onClick={() => handleSwitch(company.id)}
-                disabled={loading}
+                disabled={updateWorkspaceMutation.isPending}
               >
                 {company.logo ? (
                   <img src={company.logo} alt="" className="h-5 w-5 rounded" />

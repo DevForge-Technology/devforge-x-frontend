@@ -6,7 +6,7 @@ import { AppShell } from "@/components/shared/app-shell";
 import { getDashboardStats, getReferrals } from "@/lib/api/client";
 import type { Referral, Company } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui";
 import {
   Users,
   Building2,
@@ -47,7 +47,7 @@ export default function DashboardPage() {
       setLoading(false);
     }
     load();
-  }, [isAdmin, profile?.assignedCompanies]);
+  }, [isAdmin, profile?.assignedCompanies, profile?.last_used_company_id]);
 
   if (loading) {
     return (
@@ -137,7 +137,7 @@ export default function DashboardPage() {
           </>
         ) : (
           <>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 pb-4">
               <Card className="stat-card">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">My Referrals</CardTitle>

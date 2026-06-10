@@ -2,10 +2,14 @@ import { useMutation, useQuery, useQueryClient, UseMutationOptions } from '@tans
 import { companiesBuilder } from '../builders/companies';
 import { Company } from '../types';
 
-export function useCompaniesQuery(params?: { search?: string; page?: number; page_size?: number }) {
+export function useCompaniesQuery(
+  params?: { search?: string; page?: number; page_size?: number },
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: ['companies', params],
     queryFn: () => companiesBuilder.list(params),
+    ...options,
   });
 }
 
@@ -56,14 +60,8 @@ export function useDeleteCompanyMutation(
 export function useUpdateWorkspaceMutation(
   options?: UseMutationOptions<{ user: unknown }, Error, string>,
 ) {
-  const qc = useQueryClient();
   return useMutation({
     mutationFn: companiesBuilder.updateWorkspace,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['companies', 'mine'] });
-      qc.invalidateQueries({ queryKey: ['users', 'me'] });
-      qc.invalidateQueries({ queryKey: ['referrals'] });
-    },
     ...options,
   });
 }
