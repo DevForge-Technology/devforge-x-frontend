@@ -25,7 +25,7 @@ import {
 import { PlusCircle, X } from "lucide-react";
 import { useCreateReferralMutation, useUpdateReferralMutation } from "@/lib/api/hooks/useReferrals";
 import { useCompaniesQuery } from "@/lib/api/hooks/useCompanies";
-import type { Referral, Company } from "@/lib/types";
+import type { Referral } from "@/lib/types";
 
 const referralSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
@@ -120,7 +120,7 @@ export const ReferralModal = NiceModal.create(({ editingReferral }: ReferralModa
 
   return (
     <Dialog open={modal.visible} onOpenChange={(open) => !open && modal.hide()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg" onCloseAutoFocus={() => modal.remove()}>
         <DialogHeader>
           <DialogTitle>{editingReferral ? "Edit Referral" : "New Referral"}</DialogTitle>
         </DialogHeader>

@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 import { useCreateCompanyMutation, useUpdateCompanyMutation } from "@/lib/api/hooks/useCompanies";
 import { useUsersQuery } from "@/lib/api/hooks/useUsers";
 import { getCompanyVendors } from "@/lib/api/client";
-import type { Company, Profile } from "@/lib/types";
+import { toProfile, type Company, type Profile } from "@/lib/types";
 
 const companySchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
@@ -60,7 +60,7 @@ export const CompanyModal = NiceModal.create(({ editingCompany }: CompanyModalPr
   });
 
   const vendorOptions = useMemo(() => {
-    const fetched = (usersData?.users || []) as Profile[];
+    const fetched = (usersData?.users || []).map(toProfile);
     const merged = [...assignedVendors, ...fetched];
     return merged.filter((vendor, index, arr) => arr.findIndex((v) => v.id === vendor.id) === index);
   }, [usersData, assignedVendors]);
@@ -137,7 +137,7 @@ export const CompanyModal = NiceModal.create(({ editingCompany }: CompanyModalPr
 
   return (
     <Dialog open={modal.visible} onOpenChange={(open) => !open && modal.hide()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg" onCloseAutoFocus={() => modal.remove()}>
         <DialogHeader>
           <DialogTitle>{editingCompany ? "Edit Company" : "Create Company"}</DialogTitle>
         </DialogHeader>

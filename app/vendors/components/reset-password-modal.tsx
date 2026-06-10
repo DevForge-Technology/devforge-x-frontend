@@ -55,7 +55,7 @@ export const ResetPasswordModal = NiceModal.create(({ selectedVendor }: ResetPas
 
   return (
     <Dialog open={modal.visible} onOpenChange={(open) => !open && modal.hide()}>
-      <DialogContent>
+      <DialogContent onCloseAutoFocus={() => modal.remove()}>
         <DialogHeader>
           <DialogTitle>Reset Password for {selectedVendor.name}</DialogTitle>
         </DialogHeader>

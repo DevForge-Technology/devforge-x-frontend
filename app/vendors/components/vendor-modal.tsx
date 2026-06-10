@@ -92,7 +92,7 @@ export const VendorModal = NiceModal.create(() => {
 
   return (
     <Dialog open={modal.visible} onOpenChange={(open) => !open && modal.hide()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg" onCloseAutoFocus={() => modal.remove()}>
         <DialogHeader>
           <DialogTitle>Create Vendor</DialogTitle>
         </DialogHeader>
