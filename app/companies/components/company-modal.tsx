@@ -170,41 +170,7 @@ export const CompanyModal = NiceModal.create(({ editingCompany }: CompanyModalPr
               <div className="text-xs text-destructive">{formik.errors.description}</div>
             ) : null}
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="logo">Logo URL</Label>
-              <Input
-                id="logo"
-                name="logo"
-                value={formik.values.logo}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                placeholder="https://..."
-              />
-              {formik.touched.logo && formik.errors.logo ? (
-                <div className="text-xs text-destructive">{formik.errors.logo}</div>
-              ) : null}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="accentColor">Accent Color</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="accentColor"
-                  name="accentColor"
-                  value={formik.values.accentColor}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="#0B5DF4"
-                />
-                {formik.values.accentColor && !formik.errors.accentColor && (
-                  <div className="h-9 w-9 shrink-0 rounded-md border" style={{ backgroundColor: formik.values.accentColor }} />
-                )}
-              </div>
-              {formik.touched.accentColor && formik.errors.accentColor ? (
-                <div className="text-xs text-destructive">{formik.errors.accentColor}</div>
-              ) : null}
-            </div>
-          </div>
+         
       
           <div className="space-y-2">
             <Label>Assign Vendors</Label>

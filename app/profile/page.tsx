@@ -82,6 +82,80 @@ export default function ProfilePage() {
     },
   });
 
+  if (mustChangePassword) {
+    return (
+      <AppShell>
+        <div className="space-y-6 max-w-md mx-auto py-10">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-center">Setup Your Password</h1>
+            <p className="text-muted-foreground text-center mt-2">
+              Please set a new password to secure your account and access your workspace.
+            </p>
+          </div>
+
+          <Card className="border-0 shadow-lg shadow-slate-200/50">
+            <CardHeader>
+              <CardTitle className="text-base">Setup Password</CardTitle>
+              <CardDescription>Enter your temporary password and set a new one.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={passwordForm.handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Temporary Password</Label>
+                  <Input
+                    id="currentPassword"
+                    name="currentPassword"
+                    value={passwordForm.values.currentPassword}
+                    onChange={passwordForm.handleChange}
+                    onBlur={passwordForm.handleBlur}
+                    type="password"
+                    placeholder="Enter temporary password"
+                  />
+                  {passwordForm.touched.currentPassword && passwordForm.errors.currentPassword ? (
+                    <div className="text-xs text-destructive">{passwordForm.errors.currentPassword}</div>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input
+                    id="newPassword"
+                    name="newPassword"
+                    value={passwordForm.values.newPassword}
+                    onChange={passwordForm.handleChange}
+                    onBlur={passwordForm.handleBlur}
+                    type="password"
+                    placeholder="Enter new password"
+                  />
+                  {passwordForm.touched.newPassword && passwordForm.errors.newPassword ? (
+                    <div className="text-xs text-destructive">{passwordForm.errors.newPassword}</div>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={passwordForm.values.confirmPassword}
+                    onChange={passwordForm.handleChange}
+                    onBlur={passwordForm.handleBlur}
+                    type="password"
+                    placeholder="Confirm new password"
+                  />
+                  {passwordForm.touched.confirmPassword && passwordForm.errors.confirmPassword ? (
+                    <div className="text-xs text-destructive">{passwordForm.errors.confirmPassword}</div>
+                  ) : null}
+                </div>
+                <Button type="submit" className="w-full bg-primary" disabled={changingPassword}>
+                  {changingPassword ? "Setting password..." : "Setup Password"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-6 max-w-2xl">

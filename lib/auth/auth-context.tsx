@@ -111,10 +111,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshProfile = useCallback(async () => {
-    if (session?.access_token) {
+    const { data: { session: newSession } } = await supabase.auth.refreshSession();
+    if (newSession) {
+      setSession(newSession);
+      setUser(newSession.user);
+      await loadProfile(newSession.access_token);
+    } else if (session?.access_token) {
       await loadProfile(session.access_token);
     }
-  }, [session, loadProfile]);
+  }, [supabase, session, loadProfile]);
 
   return (
     <AuthContext.Provider value={{ user, profile, session, loading, signIn, signOut, refreshProfile }}>

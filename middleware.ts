@@ -48,14 +48,7 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  if (role === "vendor" && pathname !== "/profile") {
-    const lastUsedCompany = user.user_metadata?.last_used_company_id;
-    if (!lastUsedCompany) {
-      const redirectUrl = req.nextUrl.clone();
-      redirectUrl.pathname = "/profile";
-      return NextResponse.redirect(redirectUrl);
-    }
-  }
+  // No redirect for vendors without lastUsedCompany, they default to first company gracefully
 
   return res;
 }
