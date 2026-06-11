@@ -13,6 +13,7 @@ import { CompanyModal } from "../components/company-modal";
 import { toCompany } from "@/lib/types";
 import type { Company } from "@/lib/types";
 import type { ColumnDef } from "@/shared/ui/Table/type";
+import { ConfirmationDeleteModal } from "@/components/shared/confirmation-delete-modal";
 
 type CompanyRow = Company & { vendor_count: number };
 
@@ -57,7 +58,26 @@ export function CompaniesContainer() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this company? All vendor assignments will be removed.")) return;
+    //if (!confirm("Delete this company? All vendor assignments will be removed.")) return;
+  //   NiceModal.show(ConfirmationDeleteModal, {
+  //  title:"Are you sure you want to delete this company?",
+  //  onConfirm:async() => {
+  //   try {
+  //     await deleteMutation.mutateAsync(id);
+  //     toast.success("Company deleted");
+  //   } catch (err) {
+  //     toast.error(err instanceof Error ? err.message : "Failed to delete");
+  //   }
+  // }
+  //   })
+  // }
+  NiceModal.show(ConfirmationDeleteModal, {
+      title: "Confirm Delete ?",
+      description: "Are you sure want to delete this company? All vendor assigned will be removed.",
+      mutation: deleteMutation,
+      payload: id,
+      successMessage: "Company deleted",
+      onConfirm:async() => {
     try {
       await deleteMutation.mutateAsync(id);
       toast.success("Company deleted");
@@ -65,7 +85,8 @@ export function CompaniesContainer() {
       toast.error(err instanceof Error ? err.message : "Failed to delete");
     }
   }
-
+    })
+  }
   const loading = isLoading || isFetching;
 
   return (

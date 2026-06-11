@@ -14,6 +14,7 @@ import { VendorModal } from "../components/vendor-modal";
 import { ResetPasswordModal } from "../components/reset-password-modal";
 import { toProfile } from "@/lib/types";
 import type { Profile } from "@/lib/types";
+import { ConfirmationDeleteModal } from "@/components/shared/confirmation-delete-modal";
 
 const PAGE_SIZE = 10;
 
@@ -63,7 +64,14 @@ export function VendorsContainer() {
   }
 
   async function handleDelete(vendorId: string) {
-    if (!confirm("Are you sure you want to delete this vendor? This action cannot be undone.")) return;
+    //if (!confirm("Are you sure you want to delete this vendor? This action cannot be undone.")) return;
+      NiceModal.show(ConfirmationDeleteModal, {
+      title: "Confirm Delete ?",
+      description: "Are you sure want to delete this vendor?",
+      mutation: deleteMutation,
+      payload: vendorId,
+      successMessage: "Vendor deleted",
+      onConfirm:async() => {
     try {
       await deleteMutation.mutateAsync(vendorId);
       toast.success("Vendor deleted");
@@ -71,7 +79,8 @@ export function VendorsContainer() {
       toast.error(err instanceof Error ? err.message : "Failed to delete vendor");
     }
   }
-
+    })
+  }
   const loading = isLoading || isFetching;
 
   return (

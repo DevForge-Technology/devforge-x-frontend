@@ -27,6 +27,7 @@ import type { ColumnDef } from "@/shared/ui/Table/type";
 import { ReferralModal } from "../components/referral-modal";
 import { toReferral, toCompany, toProfile } from "@/lib/types";
 import type { Referral, Company, Profile } from "@/lib/types";
+import { ConfirmationDeleteModal } from "@/components/shared/confirmation-delete-modal";
 
 const PAGE_SIZE = 10;
 
@@ -114,13 +115,22 @@ export function ReferralsContainer() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this referral?")) return;
+    //if (!confirm("Delete this referral?")) return;
+     NiceModal.show(ConfirmationDeleteModal, {
+      title: "Confirm Delete ?",
+      description: "Are you sure want to delete this referral?",
+      mutation: deleteMutation,
+      payload: id,
+      successMessage: "Referral deleted",
+   onConfirm:async() => {
     try {
       await deleteMutation.mutateAsync(id);
       toast.success("Referral deleted");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete");
     }
+  }
+    })
   }
 
   const loading = isLoading || isFetching;

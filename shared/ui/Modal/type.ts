@@ -7,7 +7,7 @@ export interface ModalProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
-  trigger: ReactNode;
+  trigger?: ReactNode;
   children: ReactNode;
   actions?: ReactNode;
   size?: ModalSize;
