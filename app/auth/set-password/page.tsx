@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { changePassword } from "@/lib/api/client";
 import { toast } from "sonner";
+import { extractError } from "@/lib/services/apiService";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 
@@ -40,7 +41,7 @@ export default function SetPasswordPage() {
         toast.success("Password set successfully!");
         router.push("/dashboard");
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to set password");
+        toast.error(extractError(err));
       } finally {
         setLoading(false);
       }

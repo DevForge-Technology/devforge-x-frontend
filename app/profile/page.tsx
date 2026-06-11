@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Building2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { extractError } from "@/lib/services/apiService";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 
@@ -54,7 +55,7 @@ export default function ProfilePage() {
         await refreshProfile();
         toast.success("Profile updated");
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to update profile");
+        toast.error(extractError(err));
       }
       setSaving(false);
     },
@@ -75,7 +76,7 @@ export default function ProfilePage() {
         toast.success("Password changed successfully");
         resetForm();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to change password");
+        toast.error(extractError(err));
       }
       setChangingPassword(false);
     },

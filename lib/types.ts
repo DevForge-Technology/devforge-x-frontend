@@ -1,3 +1,5 @@
+import { User } from './api/types';
+
 export type { Role, User as ApiUser, VerifyTokenResponse, DashboardStats } from './api/types';
 
 export interface Company {
@@ -10,6 +12,7 @@ export interface Company {
   created_at: string;
   updated_at: string;
   vendor_count?: number;
+  vendor?: User
 }
 
 export interface Referral {
@@ -109,6 +112,7 @@ export function toCompany(c: {
   createdAt?: string;
   updatedAt?: string;
   vendorCount?: number;
+  vendor?: User
 }) {
   return {
     id: c.id,
@@ -120,5 +124,6 @@ export function toCompany(c: {
     created_at: c.createdAt ?? new Date().toISOString(),
     updated_at: c.updatedAt ?? new Date().toISOString(),
     vendor_count: c.vendorCount,
+    vendor: c.vendor
   };
 }

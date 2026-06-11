@@ -19,25 +19,32 @@ const sizeMap: Record<ButtonSize, "default" | "sm" | "lg" | "icon"> = {
   icon: "icon",
 };
 
-export const Button = ({
-  label,
-  variant = "primary",
-  size = "md",
-  loading = false,
-  disabled,
-  className,
-  children,
-  ...props
-}: ButtonProps) => {
-  return (
-    <ShadButton
-      variant={variantMap[variant]}
-      size={sizeMap[size]}
-      disabled={disabled || loading}
-      className={className}
-      {...props}
-    >
-      {loading ? "Loading..." : label ?? children}
-    </ShadButton>
-  );
-};
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      label,
+      variant = "primary",
+      size = "md",
+      loading = false,
+      disabled,
+      className,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
+    return (
+      <ShadButton
+        ref={ref}
+        variant={variantMap[variant]}
+        size={sizeMap[size]}
+        disabled={disabled || loading}
+        className={className}
+        {...props}
+      >
+        {loading ? "Loading..." : label ?? children}
+      </ShadButton>
+    );
+  }
+);
+Button.displayName = "Button";

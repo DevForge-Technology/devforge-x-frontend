@@ -6,6 +6,7 @@ import { Button, Input, Table } from "@/shared/ui";
 import { Badge } from "@/components/ui/badge";
 import { Building2, KeyRound, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { extractError } from "@/lib/services/apiService";
 import { format } from "date-fns";
 import NiceModal from "@ebay/nice-modal-react";
 import { useUsersQuery, useDeleteUserMutation } from "@/lib/api/hooks/useUsers";
@@ -64,12 +65,14 @@ export function VendorsContainer() {
 
   async function handleDelete(vendorId: string) {
     if (!confirm("Are you sure you want to delete this vendor? This action cannot be undone.")) return;
-    try {
-      await deleteMutation.mutateAsync(vendorId);
-      toast.success("Vendor deleted");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete vendor");
-    }
+    await deleteMutation.mutateAsync(vendorId, {
+      onSuccess: () => {
+        toast.success("Vendor deleted");
+      },
+      onError: (err) => {
+        toast.error(extractError(err));
+      },
+    }).catch(() => {});
   }
 
   const loading = isLoading || isFetching;
