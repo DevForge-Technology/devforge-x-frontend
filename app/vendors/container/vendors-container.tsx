@@ -6,6 +6,7 @@ import { Button, Input, Table } from "@/shared/ui";
 import { Badge } from "@/components/ui/badge";
 import { Building2, KeyRound, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { extractError } from "@/lib/services/apiService";
 import { format } from "date-fns";
 import NiceModal from "@ebay/nice-modal-react";
 import { useUsersQuery, useDeleteUserMutation } from "@/lib/api/hooks/useUsers";

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { extractError } from "@/lib/services/apiService";
 import NiceModal from "@ebay/nice-modal-react";
 import {
   useCompaniesQuery,
@@ -150,13 +151,15 @@ export function CompaniesContainer() {
                 ),
               },
               {
-                key: "vendor_count",
-                header: "Vendors",
+                key: "vendor_name",
+                header: "Vendor",
                 render: (company) => (
+                  company.vendor?.name ?
                   <span className="flex items-center gap-1 text-sm">
                     <Users className="h-3 w-3" />
-                    {company.vendor_count}
-                  </span>
+                    {company.vendor?.name }
+                  </span> :
+                  <span>N/A</span>
                 ),
               },
               {

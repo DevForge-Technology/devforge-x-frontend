@@ -47,13 +47,20 @@ apiService.interceptors.response.use(
 
 export function extractError(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError<{ message?: string; error?: string }>;
-    return (
-      axiosError.response?.data?.message ||
-      axiosError.response?.data?.error ||
-      axiosError.message ||
-      'An unexpected error occurred.'
-    );
+    const axiosError = error as AxiosError<{ message?: string | string[]; error?: string }>;
+    const data = axiosError.response?.data;
+    if (data) {
+      if (Array.isArray(data.message)) {
+        return data.message.join(', ');
+      }
+      if (typeof data.message === 'string' && data.message) {
+        return data.message;
+      }
+      if (data.error) {
+        return data.error;
+      }
+    }
+    return axiosError.message || 'An unexpected error occurred.';
   }
   if (error instanceof Error) return error.message;
   return 'An unexpected error occurred.';

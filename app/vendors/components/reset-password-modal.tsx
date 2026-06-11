@@ -5,6 +5,7 @@ import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { toast } from "sonner";
+import { extractError } from "@/lib/services/apiService";
 import {
   Dialog,
   DialogContent,
@@ -37,17 +38,22 @@ export const ResetPasswordModal = NiceModal.create(({ selectedVendor }: ResetPas
     },
     validationSchema: resetPasswordSchema,
     onSubmit: async (values) => {
-      try {
-        await resetMutation.mutateAsync({
+      await resetMutation.mutateAsync(
+        {
           id: selectedVendor.id,
           new_password: values.newPassword,
-        });
-        toast.success("Password reset and emailed");
-        modal.resolve(true);
-        modal.hide();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to reset password");
-      }
+        },
+        {
+          onSuccess: () => {
+            toast.success("Password reset and emailed");
+            modal.resolve(true);
+            modal.hide();
+          },
+          onError: (err) => {
+            toast.error(extractError(err));
+          },
+        }
+      ).catch(() => {});
     },
   });
 

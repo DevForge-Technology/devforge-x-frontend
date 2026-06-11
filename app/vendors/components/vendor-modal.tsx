@@ -5,6 +5,7 @@ import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { toast } from "sonner";
+import { extractError } from "@/lib/services/apiService";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +35,7 @@ import type { Company } from "@/lib/types";
 const createVendorSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
   email: Yup.string().email("Invalid email address").required("Email is required"),
-  companyIds: Yup.array().of(Yup.string().required()),
+  companyIds: Yup.array().of(Yup.string().required()).min(1, "At least one company must be selected"),
 });
 
 export const VendorModal = NiceModal.create(() => {
@@ -60,18 +61,23 @@ export const VendorModal = NiceModal.create(() => {
     },
     validationSchema: createVendorSchema,
     onSubmit: async (values) => {
-      try {
-        await createMutation.mutateAsync({
+      await createMutation.mutateAsync(
+        {
           name: values.name,
           email: values.email,
           companyIds: values.companyIds,
-        });
-        toast.success("Vendor created and credentials emailed");
-        modal.resolve(true);
-        modal.hide();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to create vendor");
-      }
+        },
+        {
+          onSuccess: () => {
+            toast.success("Vendor created and credentials emailed");
+            modal.resolve(true);
+            modal.hide();
+          },
+          onError: (err) => {
+            toast.error(extractError(err));
+          },
+        }
+      ).catch(() => {});
     },
   });
 
@@ -175,6 +181,11 @@ export const VendorModal = NiceModal.create(() => {
                 ))}
               </div>
             )}
+            {formik.errors.companyIds ? (
+              <div className="text-xs text-destructive">
+                {typeof formik.errors.companyIds === "string" ? formik.errors.companyIds : "At least one company must be selected"}
+              </div>
+            ) : null}
           </div>
           <p className="text-sm text-muted-foreground">
             Credentials will be emailed automatically to the vendor after creation.
