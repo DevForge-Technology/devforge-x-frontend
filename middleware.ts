@@ -62,8 +62,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // No redirect for vendors without lastUsedCompany, they default to first company gracefully
-
   return res;
 }
 

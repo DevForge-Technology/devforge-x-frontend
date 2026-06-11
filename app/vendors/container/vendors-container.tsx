@@ -15,6 +15,7 @@ import { VendorModal } from "../components/vendor-modal";
 import { ResetPasswordModal } from "../components/reset-password-modal";
 import { toProfile } from "@/lib/types";
 import type { Profile } from "@/lib/types";
+import { ConfirmationDeleteModal } from "@/components/shared/confirmation-delete-modal";
 
 const PAGE_SIZE = 10;
 
@@ -64,17 +65,24 @@ export function VendorsContainer() {
   }
 
   async function handleDelete(vendorId: string) {
-    if (!confirm("Are you sure you want to delete this vendor? This action cannot be undone.")) return;
-    await deleteMutation.mutateAsync(vendorId, {
-      onSuccess: () => {
-        toast.success("Vendor deleted");
+    NiceModal.show(ConfirmationDeleteModal, {
+      title: "Confirm Delete ?",
+      description: "Are you sure want to delete this vendor?",
+      mutation: deleteMutation,
+      payload: vendorId,
+      successMessage: "Vendor deleted",
+      onConfirm: async () => {
+        try {
+          await deleteMutation.mutateAsync(vendorId);
+          toast.success("Vendor deleted");
+        } catch (err) {
+          toast.error(
+            err instanceof Error ? err.message : "Failed to delete vendor",
+          );
+        }
       },
-      onError: (err) => {
-        toast.error(extractError(err));
-      },
-    }).catch(() => {});
+    });
   }
-
   const loading = isLoading || isFetching;
 
   return (
@@ -82,7 +90,9 @@ export function VendorsContainer() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-normal">Vendors</h1>
-          <p className="text-muted-foreground">Manage vendor accounts and company access</p>
+          <p className="text-muted-foreground">
+            Manage vendor accounts and company access
+          </p>
         </div>
         <Button size="sm" onClick={openCreate} className="bg-primary">
           <Plus className="mr-2 h-4 w-4" />
@@ -108,12 +118,16 @@ export function VendorsContainer() {
               {
                 key: "name",
                 header: "Name",
-                render: (vendor) => <span className="font-medium">{vendor.name}</span>,
+                render: (vendor) => (
+                  <span className="font-medium">{vendor.name}</span>
+                ),
               },
               {
                 key: "email",
                 header: "Email",
-                render: (vendor) => <span className="text-muted-foreground">{vendor.email}</span>,
+                render: (vendor) => (
+                  <span className="text-muted-foreground">{vendor.email}</span>
+                ),
               },
               {
                 key: "companies",
@@ -121,10 +135,16 @@ export function VendorsContainer() {
                 render: (vendor) => (
                   <div className="flex flex-wrap gap-1">
                     {vendor.companies.length === 0 ? (
-                      <span className="text-xs text-muted-foreground">None</span>
+                      <span className="text-xs text-muted-foreground">
+                        None
+                      </span>
                     ) : (
                       vendor.companies.map((company: any) => (
-                        <Badge key={company.id} variant="secondary" className="gap-1 text-xs">
+                        <Badge
+                          key={company.id}
+                          variant="secondary"
+                          className="gap-1 text-xs"
+                        >
                           <Building2 className="h-3 w-3" />
                           {company.name}
                         </Badge>
@@ -136,7 +156,11 @@ export function VendorsContainer() {
               {
                 key: "created_at",
                 header: "Created",
-                render: (vendor) => <span className="text-muted-foreground">{format(new Date(vendor.created_at), "MMM d, yyyy")}</span>,
+                render: (vendor) => (
+                  <span className="text-muted-foreground">
+                    {format(new Date(vendor.created_at), "MMM d, yyyy")}
+                  </span>
+                ),
               },
               {
                 key: "actions",
@@ -165,7 +189,11 @@ export function VendorsContainer() {
             onPageChange={setPage}
             itemName="vendors"
             loading={loading}
-            emptyMessage={search ? "No vendors match your search" : "No vendors yet. Create one to get started."}
+            emptyMessage={
+              search
+                ? "No vendors match your search"
+                : "No vendors yet. Create one to get started."
+            }
           />
         </CardContent>
       </Card>

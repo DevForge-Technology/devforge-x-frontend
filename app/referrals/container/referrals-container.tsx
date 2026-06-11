@@ -13,21 +13,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table } from "@/shared/ui";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Plus, Search, Trash2, Pencil, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { extractError } from "@/lib/services/apiService";
 import { format } from "date-fns";
 import NiceModal from "@ebay/nice-modal-react";
-import { useReferralsQuery, useDeleteReferralMutation } from "@/lib/api/hooks/useReferrals";
+import {
+  useReferralsQuery,
+  useDeleteReferralMutation,
+} from "@/lib/api/hooks/useReferrals";
 import { useCompaniesQuery } from "@/lib/api/hooks/useCompanies";
 import { useUsersQuery } from "@/lib/api/hooks/useUsers";
 import type { ColumnDef } from "@/shared/ui/Table/type";
 import { ReferralModal } from "../components/referral-modal";
 import { toReferral, toCompany, toProfile } from "@/lib/types";
 import type { Referral, Company, Profile } from "@/lib/types";
+import { ConfirmationDeleteModal } from "@/components/shared/confirmation-delete-modal";
 
 const PAGE_SIZE = 10;
 
@@ -71,7 +86,8 @@ export function ReferralsContainer() {
     params.workspace_id = profile.last_used_company_id;
   }
   if (debouncedSearch) params.search = debouncedSearch;
-  if (filterCompany && filterCompany !== "all") params.company_id = filterCompany;
+  if (filterCompany && filterCompany !== "all")
+    params.company_id = filterCompany;
   if (filterVendor && filterVendor !== "all") params.vendor_id = filterVendor;
 
   const { data, isLoading, isFetching } = useReferralsQuery(params);
@@ -80,12 +96,16 @@ export function ReferralsContainer() {
 
   // Query filters if admin
   const { data: companiesData } = useCompaniesQuery(
-    isAdmin ? { search: companySearch || undefined, page: 1, page_size: 25 } : undefined,
-    { enabled: isAdmin }
+    isAdmin
+      ? { search: companySearch || undefined, page: 1, page_size: 25 }
+      : undefined,
+    { enabled: isAdmin },
   );
   const { data: usersData } = useUsersQuery(
-    isAdmin ? { search: vendorSearch || undefined, page: 1, page_size: 25 } : undefined,
-    { enabled: isAdmin }
+    isAdmin
+      ? { search: vendorSearch || undefined, page: 1, page_size: 25 }
+      : undefined,
+    { enabled: isAdmin },
   );
 
   const referrals = (data?.referrals || []).map(toReferral);
@@ -96,7 +116,7 @@ export function ReferralsContainer() {
   const rawVendors = (usersData?.users || []).map(toProfile);
 
   // Make sure currently selected item is in the dropdown list even if it is not in the first page of search results
-  const companies:Company[] = [...rawCompanies];
+  const companies: Company[] = [...rawCompanies];
   if (selectedCompany && !companies.some((c) => c.id === selectedCompany.id)) {
     companies.push(selectedCompany);
   }
@@ -115,15 +135,21 @@ export function ReferralsContainer() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this referral?")) return;
-    await deleteMutation.mutateAsync(id, {
-      onSuccess: () => {
-        toast.success("Referral deleted");
+    NiceModal.show(ConfirmationDeleteModal, {
+      title: "Confirm Delete ?",
+      description: "Are you sure want to delete this referral?",
+      mutation: deleteMutation,
+      payload: id,
+      successMessage: "Referral deleted",
+      onConfirm: async () => {
+        try {
+          await deleteMutation.mutateAsync(id);
+          toast.success("Referral deleted");
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Failed to delete");
+        }
       },
-      onError: (err) => {
-        toast.error(extractError(err));
-      },
-    }).catch(() => {});
+    });
   }
 
   const loading = isLoading || isFetching;
@@ -134,7 +160,9 @@ export function ReferralsContainer() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Referrals</h1>
           <p className="text-muted-foreground">
-            {isAdmin ? "All referrals across the platform" : "Your referrals for the active workspace"}
+            {isAdmin
+              ? "All referrals across the platform"
+              : "Your referrals for the active workspace"}
           </p>
         </div>
         <Button size="sm" onClick={openCreate}>
@@ -160,7 +188,11 @@ export function ReferralsContainer() {
                 {/* Company Search Filter */}
                 <Popover open={companyOpen} onOpenChange={setCompanyOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="w-44 justify-between font-normal text-sm border-slate-200">
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-44 justify-between font-normal text-sm border-slate-200"
+                    >
                       <span className="truncate">
                         {filterCompany !== "all" && selectedCompany
                           ? selectedCompany.name
@@ -187,7 +219,9 @@ export function ReferralsContainer() {
                               setCompanyOpen(false);
                             }}
                           >
-                            <Check className={`mr-2 h-4 w-4 ${filterCompany === "all" ? "opacity-100" : "opacity-0"}`} />
+                            <Check
+                              className={`mr-2 h-4 w-4 ${filterCompany === "all" ? "opacity-100" : "opacity-0"}`}
+                            />
                             All Companies
                           </CommandItem>
                           {companies.map((c) => (
@@ -200,7 +234,9 @@ export function ReferralsContainer() {
                                 setCompanyOpen(false);
                               }}
                             >
-                              <Check className={`mr-2 h-4 w-4 ${filterCompany === c.id ? "opacity-100" : "opacity-0"}`} />
+                              <Check
+                                className={`mr-2 h-4 w-4 ${filterCompany === c.id ? "opacity-100" : "opacity-0"}`}
+                              />
                               <span className="truncate">{c.name}</span>
                             </CommandItem>
                           ))}
@@ -213,7 +249,11 @@ export function ReferralsContainer() {
                 {/* Vendor Search Filter */}
                 <Popover open={vendorOpen} onOpenChange={setVendorOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="w-44 justify-between font-normal text-sm border-slate-200">
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-44 justify-between font-normal text-sm border-slate-200"
+                    >
                       <span className="truncate">
                         {filterVendor !== "all" && selectedVendor
                           ? selectedVendor.name
@@ -240,7 +280,9 @@ export function ReferralsContainer() {
                               setVendorOpen(false);
                             }}
                           >
-                            <Check className={`mr-2 h-4 w-4 ${filterVendor === "all" ? "opacity-100" : "opacity-0"}`} />
+                            <Check
+                              className={`mr-2 h-4 w-4 ${filterVendor === "all" ? "opacity-100" : "opacity-0"}`}
+                            />
                             All Vendors
                           </CommandItem>
                           {vendors.map((v) => (
@@ -253,7 +295,9 @@ export function ReferralsContainer() {
                                 setVendorOpen(false);
                               }}
                             >
-                              <Check className={`mr-2 h-4 w-4 ${filterVendor === v.id ? "opacity-100" : "opacity-0"}`} />
+                              <Check
+                                className={`mr-2 h-4 w-4 ${filterVendor === v.id ? "opacity-100" : "opacity-0"}`}
+                              />
                               <span className="truncate">{v.name}</span>
                             </CommandItem>
                           ))}
@@ -272,29 +316,43 @@ export function ReferralsContainer() {
               {
                 key: "name",
                 header: "Name",
-                render: (ref) => <span className="font-medium">{ref.name}</span>,
+                render: (ref) => (
+                  <span className="font-medium">{ref.name}</span>
+                ),
               },
               {
                 key: "email",
                 header: "Email",
-                render: (ref) => <span className="text-muted-foreground">{ref.email}</span>,
+                render: (ref) => (
+                  <span className="text-muted-foreground">{ref.email}</span>
+                ),
               },
               {
                 key: "product_info",
                 header: "Product Info",
-                render: (ref) => <span className="max-w-[200px] truncate block">{ref.product_info}</span>,
+                render: (ref) => (
+                  <span className="max-w-[200px] truncate block">
+                    {ref.product_info}
+                  </span>
+                ),
               },
               {
                 key: "reference_links",
                 header: "Reference Links",
                 render: (ref) => (
                   <div className="flex flex-wrap gap-1">
-                    {ref.reference_links.slice(0, 2).map((link: string, i: number) => (
-                      <Badge key={i} variant="secondary" className="text-xs gap-1 max-w-[120px]">
-                        <LinkIcon className="h-3 w-3 shrink-0" />
-                        <span className="truncate">{link}</span>
-                      </Badge>
-                    ))}
+                    {ref.reference_links
+                      .slice(0, 2)
+                      .map((link: string, i: number) => (
+                        <Badge
+                          key={i}
+                          variant="secondary"
+                          className="text-xs gap-1 max-w-[120px]"
+                        >
+                          <LinkIcon className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{link}</span>
+                        </Badge>
+                      ))}
                     {ref.reference_links.length > 2 && (
                       <Badge variant="secondary" className="text-xs">
                         +{ref.reference_links.length - 2}
@@ -306,10 +364,14 @@ export function ReferralsContainer() {
               {
                 key: "host_name",
                 header: "Host",
-                render: (ref) => <span className="text-muted-foreground text-sm">{ref.host_name || "-"}</span>,
+                render: (ref) => (
+                  <span className="text-muted-foreground text-sm">
+                    {ref.host_name || "-"}
+                  </span>
+                ),
               },
               ...(isAdmin
-                ? [
+                ? ([
                     {
                       key: "vendor_name",
                       header: "Vendor",
@@ -320,12 +382,13 @@ export function ReferralsContainer() {
                       header: "Company",
                       render: (ref: Referral) => ref.company_name,
                     },
-                  ] as ColumnDef<Referral>[]
+                  ] as ColumnDef<Referral>[])
                 : []),
               {
                 key: "created_at",
                 header: "Created",
-                render: (ref) => format(new Date(ref.created_at), "MMM d, yyyy"),
+                render: (ref) =>
+                  format(new Date(ref.created_at), "MMM d, yyyy"),
               },
               {
                 key: "actions",
@@ -333,7 +396,12 @@ export function ReferralsContainer() {
                 align: "right",
                 render: (ref) => (
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(ref)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openEdit(ref)}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
@@ -361,12 +429,14 @@ export function ReferralsContainer() {
                 onPageChange={setPage}
                 itemName="referrals"
                 loading={loading}
-                emptyMessage={search ? "No referrals match your search" : "No referrals yet. Create one to get started."}
+                emptyMessage={
+                  search
+                    ? "No referrals match your search"
+                    : "No referrals yet. Create one to get started."
+                }
               />
             );
           })()}
-
-   
         </CardContent>
       </Card>
     </div>
