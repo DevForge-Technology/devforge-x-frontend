@@ -56,13 +56,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // if (!mustChangePassword && pathname === "/auth/set-password") {
-  //   const redirectUrl = req.nextUrl.clone();
-  //   redirectUrl.pathname = "/dashboard";
-  //   return NextResponse.redirect(redirectUrl);
-  // }
-
-  // No redirect for vendors without lastUsedCompany, they default to first company gracefully
+  if (!mustChangePassword && pathname === "/auth/set-password") {
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = "/dashboard";
+    return NextResponse.redirect(redirectUrl);
+  }
 
   return res;
 }

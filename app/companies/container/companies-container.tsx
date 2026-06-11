@@ -8,7 +8,10 @@ import { Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import NiceModal from "@ebay/nice-modal-react";
-import { useCompaniesQuery, useDeleteCompanyMutation } from "@/lib/api/hooks/useCompanies";
+import {
+  useCompaniesQuery,
+  useDeleteCompanyMutation,
+} from "@/lib/api/hooks/useCompanies";
 import { CompanyModal } from "../components/company-modal";
 import { toCompany } from "@/lib/types";
 import type { Company } from "@/lib/types";
@@ -58,34 +61,22 @@ export function CompaniesContainer() {
   }
 
   async function handleDelete(id: string) {
-    //if (!confirm("Delete this company? All vendor assignments will be removed.")) return;
-  //   NiceModal.show(ConfirmationDeleteModal, {
-  //  title:"Are you sure you want to delete this company?",
-  //  onConfirm:async() => {
-  //   try {
-  //     await deleteMutation.mutateAsync(id);
-  //     toast.success("Company deleted");
-  //   } catch (err) {
-  //     toast.error(err instanceof Error ? err.message : "Failed to delete");
-  //   }
-  // }
-  //   })
-  // }
-  NiceModal.show(ConfirmationDeleteModal, {
+    NiceModal.show(ConfirmationDeleteModal, {
       title: "Confirm Delete ?",
-      description: "Are you sure want to delete this company? All vendor assigned will be removed.",
+      description:
+        "Are you sure want to delete this company? All vendor assigned will be removed.",
       mutation: deleteMutation,
       payload: id,
       successMessage: "Company deleted",
-      onConfirm:async() => {
-    try {
-      await deleteMutation.mutateAsync(id);
-      toast.success("Company deleted");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete");
-    }
-  }
-    })
+      onConfirm: async () => {
+        try {
+          await deleteMutation.mutateAsync(id);
+          toast.success("Company deleted");
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Failed to delete");
+        }
+      },
+    });
   }
   const loading = isLoading || isFetching;
 
@@ -94,7 +85,9 @@ export function CompaniesContainer() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-normal">Companies</h1>
-          <p className="text-muted-foreground">Manage companies and vendor assignments</p>
+          <p className="text-muted-foreground">
+            Manage companies and vendor assignments
+          </p>
         </div>
         <Button size="sm" onClick={openCreate} className="bg-primary">
           <Plus className="mr-2 h-4 w-4" />
@@ -123,11 +116,17 @@ export function CompaniesContainer() {
                 render: (company) => (
                   <div className="flex items-center gap-2">
                     {company.logo ? (
-                      <img src={company.logo} alt="" className="h-6 w-6 rounded" />
+                      <img
+                        src={company.logo}
+                        alt=""
+                        className="h-6 w-6 rounded"
+                      />
                     ) : (
                       <div
                         className="flex h-6 w-6 items-center justify-center rounded text-xs font-medium text-white"
-                        style={{ backgroundColor: company.accent_color || "#0B5DF4" }}
+                        style={{
+                          backgroundColor: company.accent_color || "#0B5DF4",
+                        }}
                       >
                         {company.name.charAt(0)}
                       </div>
@@ -141,7 +140,11 @@ export function CompaniesContainer() {
                 key: "status",
                 header: "Status",
                 render: (company) => (
-                  <Badge variant={company.status === "active" ? "default" : "secondary"}>
+                  <Badge
+                    variant={
+                      company.status === "active" ? "default" : "secondary"
+                    }
+                  >
                     {company.status}
                   </Badge>
                 ),
@@ -159,7 +162,8 @@ export function CompaniesContainer() {
               {
                 key: "created_at",
                 header: "Created",
-                render: (company) => format(new Date(company.created_at), "MMM d, yyyy"),
+                render: (company) =>
+                  format(new Date(company.created_at), "MMM d, yyyy"),
                 className: "text-muted-foreground",
               },
               {
@@ -168,7 +172,12 @@ export function CompaniesContainer() {
                 align: "right",
                 render: (company) => (
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(company)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openEdit(company)}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
@@ -192,7 +201,11 @@ export function CompaniesContainer() {
             onPageChange={setPage}
             itemName="companies"
             loading={loading}
-            emptyMessage={search ? "No companies match your search" : "No companies yet. Create one to get started."}
+            emptyMessage={
+              search
+                ? "No companies match your search"
+                : "No companies yet. Create one to get started."
+            }
           />
         </CardContent>
       </Card>
