@@ -5,6 +5,7 @@ import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { toast } from "sonner";
+import { extractError } from "@/lib/services/apiService";
 import {
   Dialog,
   DialogContent,
@@ -76,9 +77,9 @@ export const CompanyModal = NiceModal.create(({ editingCompany }: CompanyModalPr
     },
     validationSchema: companySchema,
     onSubmit: async (values) => {
-      try {
-        if (editingCompany) {
-          await updateMutation.mutateAsync({
+      if (editingCompany) {
+        await updateMutation.mutateAsync(
+          {
             id: editingCompany.id,
             name: values.name,
             description: values.description,
@@ -86,23 +87,39 @@ export const CompanyModal = NiceModal.create(({ editingCompany }: CompanyModalPr
             accentColor: values.accentColor,
             status: "active",
             vendorId: values.vendorId || undefined,
-          });
-          toast.success("Company updated");
-        } else {
-          await createMutation.mutateAsync({
+          },
+          {
+            onSuccess: () => {
+              toast.success("Company updated");
+              modal.resolve(true);
+              modal.hide();
+            },
+            onError: (err) => {
+              toast.error(extractError(err));
+            },
+          }
+        ).catch(() => {});
+      } else {
+        await createMutation.mutateAsync(
+          {
             name: values.name,
             description: values.description,
             logo: values.logo,
             accentColor: values.accentColor,
             status: values.status,
             vendorId: values.vendorId || undefined,
-          });
-          toast.success("Company created");
-        }
-        modal.resolve(true);
-        modal.hide();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Operation failed");
+          },
+          {
+            onSuccess: () => {
+              toast.success("Company created");
+              modal.resolve(true);
+              modal.hide();
+            },
+            onError: (err) => {
+              toast.error(extractError(err));
+            },
+          }
+        ).catch(() => {});
       }
     },
   });
@@ -116,8 +133,8 @@ export const CompanyModal = NiceModal.create(({ editingCompany }: CompanyModalPr
             formik.setFieldValue("vendorId", vendors[0].id);
           }
         })
-        .catch(() => {
-          toast.error("Failed to load assigned vendors");
+        .catch((err) => {
+          toast.error(extractError(err));
         });
     }
   }, [editingCompany]);

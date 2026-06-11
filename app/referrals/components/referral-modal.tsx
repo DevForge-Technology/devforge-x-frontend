@@ -5,6 +5,7 @@ import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { toast } from "sonner";
+import { extractError } from "@/lib/services/apiService";
 import {
   Dialog,
   DialogContent,
@@ -38,8 +39,14 @@ const referralSchema = Yup.object().shape({
   referenceLinks: Yup.array().of(
     Yup.string().test("is-url", "Must be a valid URL", (val) => !val || /^https?:\/\/.+/.test(val))
   ),
-  hostName: Yup.string(),
-  hostEmail: Yup.string().email("Invalid host email address").nullable(),
+  hostName: Yup.string().nullable(),
+  hostEmail: Yup.string()
+    .nullable()
+    .test(
+      "is-valid-email",
+      "Invalid host email address",
+      (value) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    ),
   companyId: Yup.string(),
 });
 
@@ -94,34 +101,50 @@ export const ReferralModal = NiceModal.create(({ editingReferral }: ReferralModa
     },
     validationSchema: referralSchema,
     onSubmit: async (values) => {
-      try {
-        if (editingReferral) {
-          await updateMutation.mutateAsync({
+      if (editingReferral) {
+        await updateMutation.mutateAsync(
+          {
             id: editingReferral.id,
             name: values.name,
             email: values.email,
             productInfo: values.productInfo,
             referenceLinks: values.referenceLinks,
-            hostName: values.hostName,
-            hostEmail: values.hostEmail,
-          });
-          toast.success("Referral updated");
-        } else {
-          await createMutation.mutateAsync({
+            hostName: values.hostName || undefined,
+            hostEmail: values.hostEmail || undefined,
+          },
+          {
+            onSuccess: () => {
+              toast.success("Referral updated");
+              modal.resolve(true);
+              modal.hide();
+            },
+            onError: (err) => {
+              toast.error(extractError(err));
+            },
+          }
+        ).catch(() => {});
+      } else {
+        await createMutation.mutateAsync(
+          {
             name: values.name,
             email: values.email,
             productInfo: values.productInfo,
             referenceLinks: values.referenceLinks,
-            hostName: values.hostName,
-            hostEmail: values.hostEmail,
+            hostName: values.hostName || undefined,
+            hostEmail: values.hostEmail || undefined,
             companyId: values.companyId || undefined,
-          });
-          toast.success("Referral created");
-        }
-        modal.resolve(true);
-        modal.hide();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Operation failed");
+          },
+          {
+            onSuccess: () => {
+              toast.success("Referral created");
+              modal.resolve(true);
+              modal.hide();
+            },
+            onError: (err) => {
+              toast.error(extractError(err));
+            },
+          }
+        ).catch(() => {});
       }
     },
   });

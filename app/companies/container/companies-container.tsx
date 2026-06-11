@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { extractError } from "@/lib/services/apiService";
 import NiceModal from "@ebay/nice-modal-react";
 import { useCompaniesQuery, useDeleteCompanyMutation } from "@/lib/api/hooks/useCompanies";
 import { CompanyModal } from "../components/company-modal";
@@ -58,12 +59,14 @@ export function CompaniesContainer() {
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this company? All vendor assignments will be removed.")) return;
-    try {
-      await deleteMutation.mutateAsync(id);
-      toast.success("Company deleted");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete");
-    }
+    await deleteMutation.mutateAsync(id, {
+      onSuccess: () => {
+        toast.success("Company deleted");
+      },
+      onError: (err) => {
+        toast.error(extractError(err));
+      },
+    }).catch(() => {});
   }
 
   const loading = isLoading || isFetching;
@@ -126,13 +129,15 @@ export function CompaniesContainer() {
                 ),
               },
               {
-                key: "vendor_count",
-                header: "Vendors",
+                key: "vendor_name",
+                header: "Vendor",
                 render: (company) => (
+                  company.vendor?.name ?
                   <span className="flex items-center gap-1 text-sm">
                     <Users className="h-3 w-3" />
-                    {company.vendor_count}
-                  </span>
+                    {company.vendor?.name }
+                  </span> :
+                  <span>N/A</span>
                 ),
               },
               {
