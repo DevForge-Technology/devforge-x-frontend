@@ -9,6 +9,7 @@ import { extractError } from "@/lib/services/apiService";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -27,23 +28,35 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCreateUserMutation } from "@/lib/api/hooks/useUsers";
+import type { Profile } from "@/lib/types";
+import { useCreateUserMutation, useUpdateUserMutation } from "@/lib/api/hooks/useUsers";
 import { useCompaniesQuery } from "@/lib/api/hooks/useCompanies";
 import { toCompany } from "@/lib/types";
 import type { Company } from "@/lib/types";
 
-const createVendorSchema = Yup.object().shape({
+interface VendorModalProps{
+  editingVendor?: Profile;
+}
+
+ type VendorFormValues={
+  name: string;
+  email: string;
+  companyIds: string[];
+ }
+ 
+ const createVendorSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
   email: Yup.string().email("Invalid email address").required("Email is required"),
   companyIds: Yup.array().of(Yup.string().required()).min(1, "At least one company must be selected"),
 });
 
-export const VendorModal = NiceModal.create(() => {
+export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps) => {
   const modal = useModal();
   const [companySearch, setCompanySearch] = useState("");
   const [companyPickerOpen, setCompanyPickerOpen] = useState(false);
 
   const createMutation = useCreateUserMutation();
+  const updateMutation = useUpdateUserMutation();
 
   // Query companies for assignment
   const { data: companiesData } = useCompaniesQuery({
@@ -53,14 +66,34 @@ export const VendorModal = NiceModal.create(() => {
   });
   const companyOptions = (companiesData?.companies || []).map(toCompany);
 
-  const formik = useFormik({
-    initialValues: {
-      name: "",
-      email: "",
-      companyIds: [] as string[],
-    },
-    validationSchema: createVendorSchema,
-    onSubmit: async (values) => {
+  const formik = useFormik<VendorFormValues>({
+      enableReinitialize: true,
+      initialValues: {
+        name: editingVendor?.name || "",
+        email: editingVendor?.email || "",
+        companyIds: editingVendor?.assignedCompanies?.map(el => el.id) || [],
+      },
+      validationSchema: createVendorSchema,
+      onSubmit: async (values) => {
+        if (editingVendor) {
+          await updateMutation.mutateAsync(
+              {
+                id: editingVendor.id,
+                name: values.name,
+              },
+              {
+                onSuccess: () => {
+                  toast.success("Vendor updated");
+                  modal.resolve(true);
+                  modal.hide();
+                },
+                onError: (err) => {
+                  toast.error(extractError(err));
+                },
+              }
+            )
+            .catch(() => {});
+        } else {
       await createMutation.mutateAsync(
         {
           name: values.name,
@@ -77,11 +110,12 @@ export const VendorModal = NiceModal.create(() => {
             toast.error(extractError(err));
           },
         }
-      ).catch(() => {});
-    },
+      )
+      .catch(() => {});
+    }
+  },
   });
-
-  const selectedCompanies = useMemo(
+   const selectedCompanies = useMemo(
     () => companyOptions.filter((company: Company) => formik.values.companyIds.includes(company.id)),
     [companyOptions, formik.values.companyIds],
   );
@@ -95,107 +129,93 @@ export const VendorModal = NiceModal.create(() => {
   }
 
   const isSubmitting = createMutation.isPending;
+ return (
+      <Dialog open={modal.visible} onOpenChange={() => modal.hide()}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editingVendor ? "Edit Vendor" : "Create Vendor"}
+            </DialogTitle>
+          </DialogHeader>
 
-  return (
-    <Dialog open={modal.visible} onOpenChange={(open) => !open && modal.hide()}>
-      <DialogContent className="sm:max-w-lg" onCloseAutoFocus={() => modal.remove()}>
-        <DialogHeader>
-          <DialogTitle>Create Vendor</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={formik.handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              name="name"
-              value={formik.values.name}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              placeholder="Full name"
-            />
-            {formik.touched.name && formik.errors.name ? (
-              <div className="text-xs text-destructive">{formik.errors.name}</div>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              value={formik.values.email}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              placeholder="vendor@company.com"
-              type="email"
-            />
-            {formik.touched.email && formik.errors.email ? (
-              <div className="text-xs text-destructive">{formik.errors.email}</div>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label>Assigned Companies</Label>
-            <Popover open={companyPickerOpen} onOpenChange={setCompanyPickerOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" className="w-full justify-between">
-                  Search and select companies
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                <Command shouldFilter={false}>
-                  <CommandInput
-                    placeholder="Search companies..."
-                    value={companySearch}
-                    onValueChange={setCompanySearch}
-                  />
-                  <CommandList>
-                    <CommandEmpty>No companies found.</CommandEmpty>
-                    <CommandGroup>
-                      {companyOptions.map((company: Company) => {
-                        const selected = formik.values.companyIds.includes(company.id);
-                        return (
+          <form onSubmit={formik.handleSubmit} className="space-y-4">
+            <div>
+              <Label>Name</Label>
+              <Input {...formik.getFieldProps("name")} />
+            </div>
+
+            <div>
+              <Label>Email</Label>
+              <Input
+                {...formik.getFieldProps("email")}
+                disabled={!!editingVendor}
+              />
+            </div>
+
+            <div>
+              <Label>Companies</Label>
+              <Popover open={companyPickerOpen} onOpenChange={setCompanyPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    Select companies
+                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      value={companySearch}
+                      onValueChange={setCompanySearch}
+                      placeholder="Search..."
+                    />
+                    <CommandList>
+                      <CommandEmpty>No companies found</CommandEmpty>
+                      <CommandGroup>
+                        {companyOptions.map((company) => (
                           <CommandItem
                             key={company.id}
-                            value={company.id}
                             onSelect={() => toggleCompany(company)}
                           >
-                            <Check className={cn("mr-2 h-4 w-4", selected ? "opacity-100" : "opacity-0")} />
-                            <span className="truncate">{company.name}</span>
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formik.values.companyIds.includes(company.id)
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            {company.name}
                           </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            {selectedCompanies.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {selectedCompanies.map((company: Company) => (
-                  <Badge key={company.id} variant="secondary" className="gap-1">
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedCompanies.map((company) => (
+                  <Badge key={company.id}>
                     {company.name}
-                    <button type="button" onClick={() => toggleCompany(company)} aria-label={`Remove ${company.name}`}>
-                      <X className="h-3 w-3" />
-                    </button>
+                    <X
+                      className="ml-1 h-3 w-3 cursor-pointer"
+                      onClick={() => toggleCompany(company)}
+                    />
                   </Badge>
                 ))}
               </div>
-            )}
-            {formik.errors.companyIds ? (
-              <div className="text-xs text-destructive">
-                {typeof formik.errors.companyIds === "string" ? formik.errors.companyIds : "At least one company must be selected"}
-              </div>
-            ) : null}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Credentials will be emailed automatically to the vendor after creation.
-          </p>
-          <Button type="submit" className="w-full bg-primary" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Vendor"}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-});
+            </div>
+
+            <DialogFooter>
+              <Button type="submit" className="w-full bg-primary" disabled={isSubmitting}>
+                {editingVendor ? "Update Vendor" : "Create Vendor"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+);
+
 VendorModal.displayName = "VendorModal";
