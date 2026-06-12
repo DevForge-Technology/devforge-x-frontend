@@ -1,4 +1,4 @@
-import type { ChangeEvent, FocusEvent } from "react";
+import type { ChangeEvent, FocusEvent, ReactNode } from "react";
 
 export type InputType =
   | "text"
@@ -16,6 +16,8 @@ export interface InputProps {
   defaultValue?: string | number;
   type?: InputType;
   placeholder?: string;
+  startIcon?: ReactNode;
+  endIcon?: ReactNode;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (event: FocusEvent<HTMLInputElement>) => void;
   disabled?: boolean;
