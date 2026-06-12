@@ -173,18 +173,16 @@ export function ReferralsContainer() {
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search referrals..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="max-w-sm"
-              />
-            </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
+            <Input
+              placeholder="Search referrals..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-sm pl-4"
+              startIcon={<Search className="h-4 w-4 text-muted-foreground" />}
+            />
             {isAdmin && (
-              <>
+              <div className="flex flex-row items-center gap-3">
                 {/* Company Search Filter */}
                 <Popover open={companyOpen} onOpenChange={setCompanyOpen}>
                   <PopoverTrigger asChild>
@@ -306,7 +304,7 @@ export function ReferralsContainer() {
                     </Command>
                   </PopoverContent>
                 </Popover>
-              </>
+              </div>
             )}
           </div>
         </CardHeader>
