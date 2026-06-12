@@ -98,13 +98,15 @@ export function CompaniesContainer() {
 
       <Card className="border-blue-100 shadow-sm">
         <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Search className="h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search companies..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="max-w-sm pl-4"
-              startIcon={<Search className="h-4 w-4 text-muted-foreground" />}
+              className="max-w-sm"
             />
+          </div>
         </CardHeader>
         <CardContent>
           <Table<CompanyRow>
