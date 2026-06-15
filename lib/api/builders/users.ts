@@ -20,7 +20,7 @@ export const usersBuilder = {
     return data;
   },
 
-  update: async (id: string, payload: { name?: string; email?: string }) => {
+  update: async (id: string, payload: { name?: string; email?: string; companyIds?:string[] }) => {
     const { data } = await apiService.put<{ user: User }>(`/users/${id}`, payload);
     return data;
   },

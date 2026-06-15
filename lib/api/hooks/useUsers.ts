@@ -40,7 +40,7 @@ export function useCreateUserMutation(
 }
 
 export function useUpdateUserMutation(
-  options?: UseMutationOptions<{ user: User }, Error, { id: string; name?: string; email?: string }>,
+  options?: UseMutationOptions<{ user: User }, Error, { id: string; name?: string; email?: string; companyIds?: string[] }>,
 ) {
   const qc = useQueryClient();
   return useMutation({

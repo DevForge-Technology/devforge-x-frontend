@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
@@ -80,6 +80,7 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
               {
                 id: editingVendor.id,
                 name: values.name,
+                companyIds: values.companyIds,
               },
               {
                 onSuccess: () => {
@@ -126,9 +127,11 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
       ? prevIds.filter((id) => id !== company.id)
       : [...prevIds, company.id];
     formik.setFieldValue("companyIds", nextIds);
+    formik.validateField("companyIds");
   }
 
-  const isSubmitting = createMutation.isPending;
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  console.log(formik.dirty);
  return (
       <Dialog open={modal.visible} onOpenChange={() => modal.hide()}>
         <DialogContent className="sm:max-w-lg">
@@ -142,8 +145,10 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
             <div>
               <Label>Name</Label>
               <Input {...formik.getFieldProps("name")} />
+              {formik.touched.name && formik.errors.name ? (
+              <div className="text-xs text-destructive">{formik.errors.name}</div>
+            ) : null}
             </div>
-
             <div>
               <Label>Email</Label>
               <Input
@@ -204,10 +209,17 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
                   </Badge>
                 ))}
               </div>
+              {formik.touched.companyIds && formik.errors.companyIds ? (
+              <div className="text-xs text-destructive">{formik.errors.companyIds}</div>
+            ) : null}
             </div>
 
             <DialogFooter>
-              <Button type="submit" className="w-full bg-primary" disabled={isSubmitting}>
+              <Button type="submit" 
+              className="w-full bg-primary" 
+              loading={isSubmitting} disabled={isSubmitting || !formik.dirty} onClick={() => { 
+                formik.setTouched({name:true, email:true,companyIds:true});
+            }}>
                 {editingVendor ? "Update Vendor" : "Create Vendor"}
               </Button>
             </DialogFooter>
