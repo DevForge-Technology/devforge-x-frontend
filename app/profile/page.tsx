@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { AppShell } from "@/components/shared/app-shell";
 import { updateProfile, changePassword } from "@/lib/api/client";
@@ -10,7 +11,7 @@ import { Button, Input } from "@/shared/ui";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Building2, AlertTriangle } from "lucide-react";
+import { Building2, AlertTriangle, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { extractError } from "@/lib/services/apiService";
 import { useFormik } from "formik";
@@ -32,7 +33,8 @@ const passwordSchema = Yup.object().shape({
 });
 
 export default function ProfilePage() {
-  const { profile, refreshProfile } = useAuth();
+  const router = useRouter();
+  const { profile, refreshProfile, signOut } = useAuth();
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
@@ -75,6 +77,8 @@ export default function ProfilePage() {
         await refreshProfile();
         toast.success("Password changed successfully");
         resetForm();
+        await signOut();
+        router.push("/auth/login");
       } catch (err) {
         toast.error(extractError(err));
       }

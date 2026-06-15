@@ -30,14 +30,23 @@ export default function LoginPage() {
     onSubmit: async (values) => {
       setError(null);
       setLoading(true);
-
-      const { error: signInError, mustChangePassword } = await signIn(values.email, values.password);
+      
+      try{
+      const result = await signIn(values.email, values.password);
+      const signInError = result?.error;
+      const mustChangePassword = result?.mustChangePassword;
+      const roles = result?.roles;
       if (signInError) {
         setError(signInError);
         setLoading(false);
-      } else {
+      } 
         await new Promise((resolve) => setTimeout(resolve, 500));
-        router.push(mustChangePassword ? "/auth/set-password" : "/dashboard");
+        router.push(mustChangePassword ? "/auth/set-password" : roles === "vendor" ? "/vendor/dashboard" : "/dashboard");
+      } catch (err:any){
+        setError(err?.message || "Unexpected error occured");
+      }
+      finally{
+        setLoading(false);
       }
     },
   });

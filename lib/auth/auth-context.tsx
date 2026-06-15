@@ -16,7 +16,9 @@ interface AuthContextType {
   profile: Profile | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null; mustChangePassword?: boolean }>;
+  signIn: (email: string, password: string) => Promise<{
+    roles?: string | null; error: string | null; mustChangePassword?: boolean 
+}>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -81,7 +83,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: error.message };
+    if (error) return { error: error.message, roles: null, mustChangePassword: false };
+    const user = data?.user;
+
+    const { data: profile, error: profileError } = await supabase
+    .from("users")
+    .select("roles, must_change_password")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError) return { error: profileError.message, roles: null, mustChangePassword: false };
+
 
     // Wait for auth state to be updated by onAuthStateChange
     await new Promise<void>((resolve) => {
@@ -99,11 +111,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }, 5000);
     });
 
-    return {
-      error: null,
-      mustChangePassword: data.session?.user.user_metadata?.must_change_password === true,
-    };
+   
+  
+  return {
+    error: null,
+    mustChangePassword:
+      data.user.user_metadata?.must_change_password === true,
+    roles: profile?.roles || "user",
   };
+};
 
   const signOut = async () => {
     await supabase.auth.signOut();
