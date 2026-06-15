@@ -171,7 +171,7 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
                     <CommandList>
                       <CommandEmpty>No companies found</CommandEmpty>
                       <CommandGroup>
-                        {companyOptions.map((company) => (
+                        {companyOptions.map((company:Company) => (
                           <CommandItem
                             key={company.id}
                             onSelect={() => toggleCompany(company)}
@@ -194,7 +194,7 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
               </Popover>
 
               <div className="flex flex-wrap gap-2 mt-2">
-                {selectedCompanies.map((company) => (
+                {selectedCompanies.map((company:Company) => (
                   <Badge key={company.id}>
                     {company.name}
                     <X
