@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button, Input, Table } from "@/shared/ui";
 import { Badge } from "@/components/ui/badge";
-import { Building2, KeyRound, Plus, Search, Trash2 } from "lucide-react";
+import { Building2, KeyRound, Plus, Search, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { extractError } from "@/lib/services/apiService";
 import { format } from "date-fns";
@@ -59,6 +59,10 @@ export function VendorsContainer() {
   function openCreate() {
     NiceModal.show(VendorModal);
   }
+
+  function openEdit(vendor: Profile) {
+      NiceModal.show(VendorModal, { editingVendor: vendor });
+    }
 
   function openResetPassword(vendor: Profile) {
     NiceModal.show(ResetPasswordModal, { selectedVendor: vendor });
@@ -160,12 +164,20 @@ export function VendorsContainer() {
                   </span>
                 ),
               },
-              {
+              { 
                 key: "actions",
                 header: "Actions",
                 align: "right",
                 render: (vendor) => (
                   <div className="flex justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openEdit(vendor)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -175,8 +187,8 @@ export function VendorsContainer() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
-                ),
+                    </div>
+               ),
               },
             ]}
             data={vendors}

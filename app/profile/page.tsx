@@ -136,7 +136,7 @@ export default function ProfilePage() {
                   name="email"
                   value={profileForm.values.email}
                   onChange={profileForm.handleChange}
-                  onBlur={profileForm.handleBlur}
+                  disabled
                   placeholder="Your email"
                   type="email"
                 />
