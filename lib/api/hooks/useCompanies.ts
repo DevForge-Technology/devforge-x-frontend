@@ -72,3 +72,8 @@ export function useCompanyVendors(companyId : string){
     queryFn: async() => await companiesBuilder.getById(companyId),
   });
 }
+export function useGenerateNdaMutation() {
+  return useMutation({
+    mutationFn: (companyId: string) => companiesBuilder.generateNda(companyId),
+  });
+}

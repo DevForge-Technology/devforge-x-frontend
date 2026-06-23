@@ -144,7 +144,7 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
           <form onSubmit={formik.handleSubmit} className="space-y-4">
             <div>
               <Label>Name</Label>
-              <Input {...formik.getFieldProps("name")} />
+              <Input {...formik.getFieldProps("name")} placeholder="Vendor name"/>
               {formik.touched.name && formik.errors.name ? (
               <div className="text-xs text-destructive">{formik.errors.name}</div>
             ) : null}
@@ -153,6 +153,7 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
               <Label>Email</Label>
               <Input
                 {...formik.getFieldProps("email")}
+                placeholder="Email"
                 disabled={!!editingVendor}
               />
             </div>
@@ -200,10 +201,10 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
 
               <div className="flex flex-wrap gap-2 mt-2">
                 {selectedCompanies.map((company:Company) => (
-                  <Badge key={company.id}>
+                  <Badge key={company.id} className="inline-flex items-center justify-center gap-1">
                     {company.name}
                     <X
-                      className="ml-1 h-3 w-3 cursor-pointer"
+                      className="h-3 w-3 cursor-pointer flex-shrink-0"
                       onClick={() => toggleCompany(company)}
                     />
                   </Badge>
