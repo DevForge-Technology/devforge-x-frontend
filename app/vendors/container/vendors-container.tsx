@@ -132,6 +132,15 @@ export function VendorsContainer() {
                 ),
               },
               {
+  key: "designation",
+  header: "Designation",
+  render: (vendor) => (
+    <span className="text-muted-foreground">
+      {vendor.designation || "-"}
+    </span>
+  ),
+},
+              {
                 key: "companies",
                 header: "Assigned Companies",
                 render: (vendor) => (

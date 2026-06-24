@@ -35,6 +35,7 @@ export interface Profile {
   id: string;
   name: string;
   email: string;
+  designation?: string;
   role: 'admin' | 'vendor';
   default_company_id: string | null;
   last_used_company_id: string | null;
@@ -48,6 +49,7 @@ export function toProfile(user: {
   id: string;
   name: string;
   email: string;
+  designation?: string;
   role: 'admin' | 'vendor';
   defaultCompanyId?: string | null;
   lastUsedCompanyId?: string | null;
@@ -60,6 +62,7 @@ export function toProfile(user: {
     id: user.id,
     name: user.name,
     email: user.email,
+    designation: user.designation,
     role: user.role,
     default_company_id: user.defaultCompanyId ?? null,
     last_used_company_id: user.lastUsedCompanyId ?? null,
