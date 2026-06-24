@@ -41,12 +41,14 @@ interface VendorModalProps{
  type VendorFormValues={
   name: string;
   email: string;
+  designation: string;
   companyIds: string[];
  }
  
  const createVendorSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
   email: Yup.string().email("Invalid email address").required("Email is required"),
+  designation: Yup.string().required("Designation is required"),
   companyIds: Yup.array().of(Yup.string().required()).min(1, "At least one company must be selected"),
 });
 
@@ -71,6 +73,7 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
       initialValues: {
         name: editingVendor?.name || "",
         email: editingVendor?.email || "",
+        designation: editingVendor?.designation || "",
         companyIds: editingVendor?.assignedCompanies?.map(el => el.id) || [],
       },
       validationSchema: createVendorSchema,
@@ -80,6 +83,8 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
               {
                 id: editingVendor.id,
                 name: values.name,
+                email: values.email,
+                designation: values.designation,
               },
               {
                 onSuccess: () => {
@@ -98,6 +103,7 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
         {
           name: values.name,
           email: values.email,
+          designation: values.designation,
           companyIds: values.companyIds,
         },
         {
@@ -143,6 +149,14 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
               <Label>Name</Label>
               <Input {...formik.getFieldProps("name")} />
             </div>
+
+            <div>
+  <Label>Designation</Label>
+  <Input
+    {...formik.getFieldProps("designation")}
+    placeholder="Enter designation"
+  />
+</div>
 
             <div>
               <Label>Email</Label>

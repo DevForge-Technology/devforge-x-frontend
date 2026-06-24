@@ -29,7 +29,7 @@ export function useMeQuery() {
 }
 
 export function useCreateUserMutation(
-  options?: UseMutationOptions<{ user: User }, Error, { name: string; email: string; companyIds?: string[] }>,
+  options?: UseMutationOptions<{ user: User }, Error, { name: string; email: string; designation: string; companyIds?: string[] }>,
 ) {
   const qc = useQueryClient();
   return useMutation({
@@ -40,7 +40,7 @@ export function useCreateUserMutation(
 }
 
 export function useUpdateUserMutation(
-  options?: UseMutationOptions<{ user: User }, Error, { id: string; name?: string; email?: string }>,
+  options?: UseMutationOptions<{ user: User }, Error, { id: string; name?: string; email?: string; designation?: string }>,
 ) {
   const qc = useQueryClient();
   return useMutation({
