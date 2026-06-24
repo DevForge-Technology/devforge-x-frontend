@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/shared/ui";
+import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
@@ -132,11 +132,9 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
       ? prevIds.filter((id) => id !== company.id)
       : [...prevIds, company.id];
     formik.setFieldValue("companyIds", nextIds);
-    formik.validateField("companyIds");
   }
 
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
-  console.log(formik.dirty);
+  const isSubmitting = createMutation.isPending;
  return (
       <Dialog open={modal.visible} onOpenChange={() => modal.hide()}>
         <DialogContent className="sm:max-w-lg">
@@ -149,11 +147,9 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
           <form onSubmit={formik.handleSubmit} className="space-y-4">
             <div>
               <Label>Name</Label>
-              <Input {...formik.getFieldProps("name")} placeholder="Vendor name"/>
-              {formik.touched.name && formik.errors.name ? (
-              <div className="text-xs text-destructive">{formik.errors.name}</div>
-            ) : null}
+              <Input {...formik.getFieldProps("name")} />
             </div>
+
             <div>
   <Label>Designation</Label>
   <Input
@@ -166,7 +162,6 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
               <Label>Email</Label>
               <Input
                 {...formik.getFieldProps("email")}
-                placeholder="Email"
                 disabled={!!editingVendor}
               />
             </div>
@@ -214,26 +209,19 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
 
               <div className="flex flex-wrap gap-2 mt-2">
                 {selectedCompanies.map((company:Company) => (
-                  <Badge key={company.id} className="inline-flex items-center justify-center gap-1">
+                  <Badge key={company.id}>
                     {company.name}
                     <X
-                      className="h-3 w-3 cursor-pointer flex-shrink-0"
+                      className="ml-1 h-3 w-3 cursor-pointer"
                       onClick={() => toggleCompany(company)}
                     />
                   </Badge>
                 ))}
               </div>
-              {formik.touched.companyIds && formik.errors.companyIds ? (
-              <div className="text-xs text-destructive">{formik.errors.companyIds}</div>
-            ) : null}
             </div>
 
             <DialogFooter>
-              <Button type="submit" 
-              className="w-full bg-primary" 
-              loading={isSubmitting} disabled={isSubmitting || !formik.dirty} onClick={() => { 
-                formik.setTouched({name:true, email:true,companyIds:true});
-            }}>
+              <Button type="submit" className="w-full bg-primary" disabled={isSubmitting}>
                 {editingVendor ? "Update Vendor" : "Create Vendor"}
               </Button>
             </DialogFooter>

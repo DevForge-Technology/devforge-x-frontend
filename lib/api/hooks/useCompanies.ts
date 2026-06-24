@@ -65,15 +65,3 @@ export function useUpdateWorkspaceMutation(
     ...options,
   });
 }
-
-export function useCompanyVendors(companyId : string){
-  return useQuery({
-    queryKey: ['companies', 'mine'],
-    queryFn: async() => await companiesBuilder.getById(companyId),
-  });
-}
-export function useGenerateNdaMutation() {
-  return useMutation({
-    mutationFn: (companyId: string) => companiesBuilder.generateNda(companyId),
-  });
-}

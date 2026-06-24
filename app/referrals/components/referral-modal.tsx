@@ -100,7 +100,6 @@ export const ReferralModal = NiceModal.create(({ editingReferral }: ReferralModa
       companyId: editingReferral?.company_id || (isVendor ? (profile?.last_used_company_id || profile?.assignedCompanies?.[0]?.id || "") : ""),
     },
     validationSchema: referralSchema,
-    enableReinitialize: true,
     onSubmit: async (values) => {
       if (editingReferral) {
         await updateMutation.mutateAsync(
@@ -327,7 +326,7 @@ export const ReferralModal = NiceModal.create(({ editingReferral }: ReferralModa
               ) : null}
             </div>
           )}
-          <Button type="submit" className="w-full" loading={isSubmitting} disabled={isSubmitting || !formik.dirty}>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Saving..." : editingReferral ? "Update Referral" : "Create Referral"}
           </Button>
         </form>

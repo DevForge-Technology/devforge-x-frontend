@@ -55,11 +55,4 @@ export const companiesBuilder = {
     const { data } = await apiService.patch<{ user: unknown }>('/companies/workspace', { companyId });
     return data;
   },
-
-  generateNda: async (id: string): Promise<Blob> => {
-    const response = await apiService.post(`/companies/${id}/generate-nda`, {}, {
-      responseType: 'blob', // Keeps the file from getting corrupted as text string chunks
-    });
-    return response.data as unknown as Blob;
-  },
 };

@@ -154,10 +154,3 @@ export async function getDashboardStats() {
     total_referrals: stats.totalReferrals ?? 0,
   };
 }
-export async function generateCompanyNDA(id: string) {
-  // Casting to 'any' bypasses the TypeScript type restriction so it compiles
-  const response = await (companiesBuilder as any).client.post(`/companies/${id}/generate-nda`, {}, {
-    responseType: 'blob'
-  });
-  return response.data;
-}

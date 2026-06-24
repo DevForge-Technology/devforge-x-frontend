@@ -28,11 +28,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCompanyVendors, useCreateCompanyMutation, useUpdateCompanyMutation } from "@/lib/api/hooks/useCompanies";
+import { useCreateCompanyMutation, useUpdateCompanyMutation } from "@/lib/api/hooks/useCompanies";
 import { useUsersQuery } from "@/lib/api/hooks/useUsers";
 import { getCompanyVendors } from "@/lib/api/client";
 import { toProfile, type Company, type Profile } from "@/lib/types";
-import { User } from "@/lib/api/types";
 
 const companySchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
@@ -51,7 +50,7 @@ export const CompanyModal = NiceModal.create(({ editingCompany }: CompanyModalPr
   const [vendorSearch, setVendorSearch] = useState("");
   const [vendorPickerOpen, setVendorPickerOpen] = useState(false);
   const [assignedVendors, setAssignedVendors] = useState<Profile[]>([]);
-  const {data: vendor} = useCompanyVendors(editingCompany?.id || " ");
+
   const createMutation = useCreateCompanyMutation();
   const updateMutation = useUpdateCompanyMutation();
 
@@ -74,10 +73,9 @@ export const CompanyModal = NiceModal.create(({ editingCompany }: CompanyModalPr
       logo: editingCompany?.logo || "",
       accentColor: editingCompany?.accent_color || "",
       status: (editingCompany?.status || "active") as "active" | "inactive",
-      vendorId: (vendor?.assignedVendors as unknown as Profile[])?.[0]?.id,
+      vendorId: "",
     },
-    validationSchema: companySchema, 
-    enableReinitialize:true,
+    validationSchema: companySchema,
     onSubmit: async (values) => {
       if (editingCompany) {
         await updateMutation.mutateAsync(
@@ -126,20 +124,20 @@ export const CompanyModal = NiceModal.create(({ editingCompany }: CompanyModalPr
     },
   });
 
-  // useEffect(() => {
-  //   if (editingCompany) {
-  //     getCompanyVendors(editingCompany.id)
-  //       .then((vendors) => {
-  //         setAssignedVendors(vendors);
-  //         if (vendors.length > 0) {
-  //           formik.setFieldValue("vendorId", vendors[0].id);
-  //         }
-  //       })
-  //       .catch((err) => {
-  //         toast.error(extractError(err));
-  //       });
-  //   }
-  // }, [editingCompany]);
+  useEffect(() => {
+    if (editingCompany) {
+      getCompanyVendors(editingCompany.id)
+        .then((vendors) => {
+          setAssignedVendors(vendors);
+          if (vendors.length > 0) {
+            formik.setFieldValue("vendorId", vendors[0].id);
+          }
+        })
+        .catch((err) => {
+          toast.error(extractError(err));
+        });
+    }
+  }, [editingCompany]);
 
   const selectedVendors = useMemo(() => {
     return vendorOptions.filter((vendor) => vendor.id === formik.values.vendorId);
@@ -153,7 +151,7 @@ export const CompanyModal = NiceModal.create(({ editingCompany }: CompanyModalPr
   }
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
-console.log(formik.dirty)
+
   return (
     <Dialog open={modal.visible} onOpenChange={(open) => !open && modal.hide()}>
       <DialogContent className="sm:max-w-lg" onCloseAutoFocus={() => modal.remove()}>
@@ -241,8 +239,8 @@ console.log(formik.dirty)
               </div>
             )}
           </div>
-          <Button type="submit" className="w-full bg-primary" loading={updateMutation.isPending || createMutation.isPending} disabled={updateMutation.isPending || createMutation.isPending || !formik.dirty}>
-            {editingCompany ? "Update Company" : "Create Company"}
+          <Button type="submit" className="w-full bg-primary" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : editingCompany ? "Update Company" : "Create Company"}
           </Button>
         </form>
       </DialogContent>
