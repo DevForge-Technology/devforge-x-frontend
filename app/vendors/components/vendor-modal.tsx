@@ -172,45 +172,53 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
             </div>
 
             <div>
-              <Label>Companies</Label>
-              <Popover open={companyPickerOpen} onOpenChange={setCompanyPickerOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between">
-                    Select companies
-                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="p-0">
-                  <Command shouldFilter={false}>
-                    <CommandInput
-                      value={companySearch}
-                      onValueChange={setCompanySearch}
-                      placeholder="Search..."
-                    />
-                    <CommandList>
-                      <CommandEmpty>No companies found</CommandEmpty>
-                      <CommandGroup>
-                        {companyOptions.map((company:Company) => (
-                          <CommandItem
-                            key={company.id}
-                            onSelect={() => toggleCompany(company)}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formik.values.companyIds.includes(company.id)
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {company.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+  <Label>Companies</Label>
+  <Popover open={companyPickerOpen} onOpenChange={setCompanyPickerOpen}>
+    <PopoverTrigger asChild>
+      <button
+        type="button"
+        className="w-full flex items-center justify-between font-normal text-sm border border-slate-200 rounded-md bg-white px-3 py-2 text-slate-950 shadow-sm hover:bg-slate-50 transition-colors h-10"
+      >
+        <span className="truncate text-muted-foreground">
+          {formik.values.companyIds.length > 0
+            ? `${formik.values.companyIds.length} selected`
+            : "Select companies"}
+        </span>
+        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+      </button>
+    </PopoverTrigger>
+    
+    <PopoverContent className="p-0">
+      <Command shouldFilter={false}>
+        <CommandInput
+          value={companySearch}
+          onValueChange={setCompanySearch}
+          placeholder="Search..."
+        />
+        <CommandList>
+          <CommandEmpty>No companies found</CommandEmpty>
+          <CommandGroup>
+            {companyOptions.map((company: Company) => (
+              <CommandItem
+                key={company.id}
+                onSelect={() => toggleCompany(company)}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    formik.values.companyIds.includes(company.id)
+                      ? "opacity-100"
+                      : "opacity-0"
+                  )}
+                />
+                {company.name}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    </PopoverContent>
+  </Popover>
 
               <div className="flex flex-wrap gap-2 mt-2">
                 {selectedCompanies.map((company:Company) => (

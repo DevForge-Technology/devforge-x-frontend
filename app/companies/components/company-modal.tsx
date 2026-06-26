@@ -126,21 +126,6 @@ export const CompanyModal = NiceModal.create(({ editingCompany }: CompanyModalPr
     },
   });
 
-  // useEffect(() => {
-  //   if (editingCompany) {
-  //     getCompanyVendors(editingCompany.id)
-  //       .then((vendors) => {
-  //         setAssignedVendors(vendors);
-  //         if (vendors.length > 0) {
-  //           formik.setFieldValue("vendorId", vendors[0].id);
-  //         }
-  //       })
-  //       .catch((err) => {
-  //         toast.error(extractError(err));
-  //       });
-  //   }
-  // }, [editingCompany]);
-
   const selectedVendors = useMemo(() => {
     return vendorOptions.filter((vendor) => vendor.id === formik.values.vendorId);
   }, [vendorOptions, formik.values.vendorId]);
@@ -192,42 +177,49 @@ console.log(formik.dirty)
          
       
           <div className="space-y-2">
-            <Label>Assign Vendors</Label>
-            <Popover open={vendorPickerOpen} onOpenChange={setVendorPickerOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" className="w-full justify-between">
-                  Search and select vendors
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                <Command shouldFilter={false}>
-                  <CommandInput
-                    placeholder="Search vendors..."
-                    value={vendorSearch}
-                    onValueChange={setVendorSearch}
-                  />
-                  <CommandList>
-                    <CommandEmpty>No vendors found.</CommandEmpty>
-                    <CommandGroup>
-                      {vendorOptions.map((vendor) => {
-                        const selected = formik.values.vendorId === vendor.id;
-                        return (
-                          <CommandItem
-                            key={vendor.id}
-                            value={vendor.id}
-                            onSelect={() => toggleVendor(vendor)}
-                          >
-                            <Check className={cn("mr-2 h-4 w-4", selected ? "opacity-100" : "opacity-0")} />
-                            <span className="truncate">{vendor.name}</span>
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+  <Label>Assign Vendors</Label>
+  <Popover open={vendorPickerOpen} onOpenChange={setVendorPickerOpen}>
+    <PopoverTrigger asChild>
+      <button
+        type="button"
+        role="combobox"
+        className="w-full flex items-center justify-between font-normal text-sm border border-slate-200 rounded-md bg-white px-3 py-2 text-slate-950 shadow-sm hover:bg-slate-50 transition-colors h-10"
+      >
+        <span className="truncate text-muted-foreground">
+          {vendorOptions.find((v) => v.id === formik.values.vendorId)?.name || "Search and select vendors"}
+        </span>
+        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+      </button>
+    </PopoverTrigger>
+    
+    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <Command shouldFilter={false}>
+        <CommandInput
+          placeholder="Search vendors..."
+          value={vendorSearch}
+          onValueChange={setVendorSearch}
+        />
+        <CommandList>
+          <CommandEmpty>No vendors found.</CommandEmpty>
+          <CommandGroup>
+            {vendorOptions.map((vendor) => {
+              const selected = formik.values.vendorId === vendor.id;
+              return (
+                <CommandItem
+                  key={vendor.id}
+                  value={vendor.id}
+                  onSelect={() => toggleVendor(vendor)}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", selected ? "opacity-100" : "opacity-0")} />
+                  <span className="truncate">{vendor.name}</span>
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    </PopoverContent>
+  </Popover>
             {selectedVendors.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {selectedVendors.map((vendor) => (
