@@ -28,6 +28,23 @@ export function ReportList({ companyId, isAdmin = false }: ReportListProps) {
     }
   };
 
+  const handleDownload = async (report: Report) => {
+    try {
+      const response = await fetch(report.fileUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = report.fileName; // preserves original name + extension
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      alert(`Error downloading report: ${error}`);
+    }
+  };
+
   if (isLoading) {
     return <div className="text-center py-8">Loading reports...</div>;
   }
@@ -66,14 +83,12 @@ export function ReportList({ companyId, isAdmin = false }: ReportListProps) {
             {data.data.map((report: Report) => (
               <tr key={report.id} className="hover:bg-gray-50">
                 <td className="border border-gray-300 p-2">
-                  <a
-                    href={report.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                  <button
+                    onClick={() => handleDownload(report)}
+                    className="text-blue-600 hover:underline text-left"
                   >
                     {report.fileName}
-                  </a>
+                  </button>
                 </td>
                 <td className="border border-gray-300 p-2 text-sm">{(report.fileSize / 1024).toFixed(2)}</td>
                 <td className="border border-gray-300 p-2 text-sm">
