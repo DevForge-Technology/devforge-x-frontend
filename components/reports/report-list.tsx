@@ -1,10 +1,11 @@
 'use client';
-
+import React, { useState } from "react";
 import { useCompanyReportsQuery, useDeleteReportMutation } from '@/lib/api/hooks/useReports';
 import { Button } from '@/components/ui/button';
 import { Report } from '@/lib/api/builders/reports';
 import { useAuth } from '@/lib/auth/auth-context';
-
+import NiceModal from "@ebay/nice-modal-react";
+import { ConfirmationDeleteModal } from "@/components/shared/confirmation-delete-modal";
 interface ReportListProps {
   companyId: string;
   isAdmin?: boolean;
@@ -15,18 +16,15 @@ export function ReportList({ companyId, isAdmin = false }: ReportListProps) {
   const deleteMutation = useDeleteReportMutation();
   const { profile } = useAuth()
 
-  const handleDelete = async (reportId: string) => {
-    if (!window.confirm('Are you sure you want to delete this report?')) {
-      return;
-    }
-
-    try {
-      await deleteMutation.mutateAsync(reportId);
-      alert('Report deleted successfully!');
-    } catch (error) {
-      alert(`Error deleting report: ${error}`);
-    }
-  };
+  const handleDelete = (reportId: string) => {
+  NiceModal.show(ConfirmationDeleteModal, {
+    title: "Confirm Delete ?",
+    description: "Are you sure want to delete this report?",
+    payload: reportId,
+    mutation: deleteMutation,
+    successMessage: "Report deleted successfully!",
+  });
+};
 
   const handleDownload = async (report: Report) => {
     try {
@@ -96,13 +94,13 @@ export function ReportList({ companyId, isAdmin = false }: ReportListProps) {
                 </td>
                 {profile?.role === "vendor" && <td className="border border-gray-300 p-2">
                   <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(report.id)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                  </Button>
+  variant="destructive"
+  size="sm"
+  loading={deleteMutation.isPending}
+  onClick={() => handleDelete(report.id)}
+>
+  Delete
+</Button>
                 </td>}
               </tr>
             ))}

@@ -56,14 +56,27 @@ export const companiesBuilder = {
     return data;
   },
 
-  generateNda: async ({ companyId, customEmail, templateId }: { companyId: string; customEmail: string; templateId: string }): Promise<Blob> => {
-  const response = await apiService.post(`/companies/${companyId}/generate-nda`, {
-    customEmail,
-    templateId
-  }, {
-    responseType: 'blob',
-  });
-  return response.data as unknown as Blob;
+  generateNda: async ({
+  companyId,
+  email,
+  message,
+}: {
+  companyId: string;
+  email: string;
+  message: string;
+}): Promise<Blob> => {
+  const response = await apiService.post(
+    `/companies/${companyId}/generate-nda`,
+    {
+      email,
+      message,
+    },
+    {
+      responseType: "blob",
+    }
+  );
+
+  return response.data as Blob;
 },
   sendNda: async (id: string) => {
     const { data } = await apiService.post(

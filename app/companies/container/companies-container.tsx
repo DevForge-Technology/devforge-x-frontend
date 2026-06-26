@@ -5,11 +5,9 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button, Input, Table } from "@/shared/ui";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Plus, Search, Trash2, Users, FileText, MoreVertical } from "lucide-react"; // <-- Changed to MoreVertical
+import { Pencil, Plus, Search, Trash2, Users, FileText, MoreVertical } from "lucide-react"; 
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { useGenerateNdaMutation, useSendNdaMutation } from "@/lib/api/hooks/useCompanies";
-import { extractError } from "@/lib/services/apiService";
 import NiceModal from "@ebay/nice-modal-react";
 import {
   DropdownMenu,
@@ -25,7 +23,6 @@ import {
 import { CompanyModal } from "../components/company-modal";
 import { toCompany } from "@/lib/types";
 import type { Company } from "@/lib/types";
-import type { ColumnDef } from "@/shared/ui/Table/type";
 import { ConfirmationDeleteModal } from "@/components/shared/confirmation-delete-modal";
 
 type CompanyRow = Company & { vendor_count: number };
@@ -71,37 +68,6 @@ export function CompaniesContainer() {
     NiceModal.show(CompanyModal, { editingCompany: company });
   }
 
-  const generateNdaMutation = useGenerateNdaMutation();
-  const sendNdaMutation = useSendNdaMutation();
-
-
-    async function handleGenerateNDA(company: Company) {
-    const toastId = toast.loading(`Generating and emailing NDA for ${company.name}...`);
-
-    generateNdaMutation.mutate({
-      companyId: company.id,
-      customEmail: (company as any).vendor?.email || "", 
-      templateId: "standard_formal"                     
-    }, {
-      onSuccess: (fileBlob) => {
-        const downloadUrl = window.URL.createObjectURL(fileBlob);
-        const link = document.createElement("a");
-        link.href = downloadUrl;
-        link.setAttribute("download", `NDA_${company.name.replace(/\s+/g, "_")}.pdf`);
-
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode?.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
-
-        toast.success("NDA downloaded and vendor copy emailed!", { id: toastId });
-      },
-      onError: (err) => {
-        console.error("NDA Generation Error:", err);
-        toast.error("Could not generate NDA. Please check developer server logs.", { id: toastId });
-      },
-    });
-  }
   async function handleDelete(id: string) {
     NiceModal.show(ConfirmationDeleteModal, {
       title: "Confirm Delete ?",

@@ -74,8 +74,11 @@ export function useCompanyVendors(companyId : string){
 }
 export function useGenerateNdaMutation() {
   return useMutation({
-    mutationFn: (payload: { companyId: string; customEmail: string; templateId: string }) => 
-      companiesBuilder.generateNda(payload),
+    mutationFn: (payload: {
+      companyId: string;
+      email: string;
+      message: string;
+    }) => companiesBuilder.generateNda(payload),
   });
 }
 
