@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { AppShell } from '@/components/shared/app-shell';
 import { getDashboardStats, getReferrals } from '@/lib/api/client';
 import type { Referral, Company } from '@/lib/types';
-import { useUploadReportMutation, useCompanyReportsQuery } from '@/lib/api/hooks/useReports';
+import { useUploadReportMutation } from '@/lib/api/hooks/useReports';
 import { ReportList } from '@/components/reports';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/shared/ui';
@@ -15,16 +15,16 @@ import {
   FileText,
   ArrowRight,
   TrendingUp,
-  Download,
   Upload,
   Clock,
   Loader2,
-  CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export function DashboardContainer() {
+  const router = useRouter();
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -64,11 +64,6 @@ export function DashboardContainer() {
     load();
   }, [isAdmin, profile?.assignedCompanies, profile?.last_used_company_id]);
 
-  const handleDownloadNda = (url: string) => {
-    if (!url) return;
-    window.open(url, '_blank');
-  };
-
   const triggerFileInput = (companyId: string) => {
     setSelectedCompanyId(companyId);
     fileInputRef.current?.click();
@@ -85,13 +80,11 @@ export function DashboardContainer() {
     }
 
     try {
-      // Use the mutation hook for consistent API calling pattern
       await uploadMutation.mutateAsync({
         companyId: selectedCompanyId,
         file,
         dto: {},
       });
-
       alert('Signed report submitted successfully for review!');
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -121,12 +114,6 @@ export function DashboardContainer() {
     vendorCompanies.find((c) => c.id === profile?.last_used_company_id) ??
     vendorCompanies[0];
 
-  // Uses only standard `ndaUrl` and `ndaStatus` fields matching your exact backend data contracts
-  const executedNdas = vendorCompanies.filter((company: any) => {
-    const status = company.ndaStatus?.toLowerCase();
-    return status === 'signed' || status === 'completed' || !!company.ndaUrl;
-  });
-
   const pendingNdas = vendorCompanies.filter((company: any) => {
     const status = company.ndaStatus?.toLowerCase();
     return !company.ndaUrl && (status === 'sent' || status === 'pending' || !company.ndaStatus);
@@ -148,13 +135,87 @@ export function DashboardContainer() {
             {isAdmin ? 'Admin Dashboard' : 'Dashboard'}
           </h1>
           <p className="text-muted-foreground">
-            {!isAdmin && activeWorkspace
-              ? `Workspace: ${activeWorkspace.name}`
-              : 'Overview of your platform'}
+            {isAdmin ? 'Overview of your platform' : activeWorkspace ? `Workspace: ${activeWorkspace.name}` : 'Overview of your platform'}
           </p>
         </div>
 
-        {/* Admin Section code remains completely identical to yours */}
+        {/* ADMIN VIEW LAYOUT */}
+        {isAdmin && (
+          <>
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card className="border-slate-100 shadow-sm bg-white rounded-xl">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Vendors</CardTitle>
+                  <Users className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stats.total_vendors}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-100 shadow-sm bg-white rounded-xl">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Companies</CardTitle>
+                  <Building2 className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stats.total_companies}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-100 shadow-sm bg-white rounded-xl">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Referrals</CardTitle>
+                  <FileText className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stats.total_referrals}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Button onClick={() => router.push('/vendors')} variant="outline" size="sm" className="gap-2">
+                <Users className="h-4 w-4" /> Manage Vendors
+              </Button>
+              <Button onClick={() => router.push('/companies')} variant="outline" size="sm" className="gap-2">
+                <Building2 className="h-4 w-4" /> Manage Companies
+              </Button>
+              <Button onClick={() => router.push('/referrals')} variant="outline" size="sm" className="gap-2">
+                <FileText className="h-4 w-4" /> View Referrals
+              </Button>
+            </div>
+
+            <Card className="border-slate-200 shadow-sm bg-white rounded-xl mt-4">
+              <CardHeader className="border-b border-slate-100 p-5 flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg font-bold text-slate-900">Recent Referrals</CardTitle>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => router.push('/referrals')} className="gap-1 text-blue-600">
+                  View all <ArrowRight className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="p-6">
+                {recentReferrals.length > 0 ? (
+                  <div className="divide-y divide-slate-100">
+                    {recentReferrals.map((ref) => (
+                      <div key={ref.id} className="py-3 flex justify-between text-sm">
+                        <span className="font-medium text-slate-700">{ref.name || 'Unnamed Referral'}</span>
+                        <span className="text-slate-400 font-mono">{ref.id}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-sm text-slate-400 font-medium">
+                    No referrals yet
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {/* VENDOR VIEW LAYOUT */}
         {!isAdmin && (
           <>
             <div className="grid gap-4 md:grid-cols-2 pb-4">
@@ -195,8 +256,7 @@ export function DashboardContainer() {
                 <Card className="border-amber-200 shadow-sm bg-amber-50/20 rounded-xl">
                   <CardHeader className="border-b border-amber-100 p-5">
                     <CardTitle className="text-lg font-bold text-amber-900 flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-amber-600" /> Action Required: Sign
-                      NDA Agreements
+                      <AlertCircle className="h-5 w-5 text-amber-600" /> Action Required: Sign NDA Agreements
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0 bg-white rounded-b-xl divide-y divide-slate-100">
@@ -249,7 +309,6 @@ export function DashboardContainer() {
                   </CardContent>
                 </Card>
               )}
-
             </div>
           </>
         )}

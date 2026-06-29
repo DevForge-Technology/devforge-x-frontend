@@ -121,22 +121,7 @@ export function CompaniesContainer() {
                 header: "Name",
                 render: (company) => (
                   <div className="flex items-center gap-2">
-                    {company.logo ? (
-                      <img
-                        src={company.logo}
-                        alt=""
-                        className="h-6 w-6 rounded"
-                      />
-                    ) : (
-                      <div
-                        className="flex h-6 w-6 items-center justify-center rounded text-xs font-medium text-white"
-                        style={{
-                          backgroundColor: company.accent_color || "#0B5DF4",
-                        }}
-                      >
-                        {company.name.charAt(0)}
-                      </div>
-                    )}
+        
                     <button
         type="button"
         onClick={() => router.push(`/companies/${company.id}`)}

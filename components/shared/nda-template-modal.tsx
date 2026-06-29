@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button, Input } from "@/shared/ui";
 import dynamic from "next/dynamic";
@@ -30,21 +30,35 @@ export function NdaTemplateModal({
   onConfirm,
   isPending
 }: NdaTemplateModalProps) {
-  const [email, setEmail] = useState(initialEmail);
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setEmail(initialEmail || "");
+      setMessage("");
+    }
+  }, [isOpen, initialEmail]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
+
+    const cleanTextCheck = message.replace(/<(.|\n)*?>/g, "").trim();
+    const cleanMessage = cleanTextCheck === "" ? "" : message;
+
     onConfirm({
       email,
-      message,
+      message: cleanMessage,
     });
+
+    setEmail("");
+    setMessage("");
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-white rounded-xl">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl bg-white rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <Mail className="h-5 w-5 text-blue-600" /> Dispatch NDA Agreement

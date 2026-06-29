@@ -41,12 +41,12 @@ export function CompanyDetailContainer() {
     );
   }
 
-  const processNdaSubmission = ({ email, templateId }: { email: string; templateId: string }) => {
+  const processNdaSubmission = ({ email, message }: { email: string; message: string }) => {
     setIsModalOpen(false);
     const toastId = toast.loading(`Generating and dispatching email to ${email}...`);
 
     generateNdaMutation.mutate(
-      { companyId: company.id, customEmail: email, templateId },
+      { companyId: company.id, email, message },
       {
         onSuccess: (fileBlob) => {
           const downloadUrl = window.URL.createObjectURL(fileBlob);
