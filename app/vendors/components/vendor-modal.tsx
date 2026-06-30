@@ -185,8 +185,8 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
             <Label>Companies</Label>
             <Popover open={companyPickerOpen} onOpenChange={setCompanyPickerOpen}>
               <PopoverTrigger asChild>
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
                   className="w-full flex items-center justify-between font-normal text-sm border border-slate-200 rounded-md bg-white px-3 py-2 text-slate-950 shadow-sm hover:bg-slate-50 transition-colors h-10"
                 >
                   <span className="truncate text-muted-foreground">
@@ -194,8 +194,8 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
                       ? `${formik.values.companyIds.length} selected`
                       : "Select companies"}
                   </span>
-                  <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-                </button>
+                  <ChevronsUpDown className="absolute right-3 top-1/2 -translate-y-1/2 ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
               </PopoverTrigger>
 
               <PopoverContent className="p-0">

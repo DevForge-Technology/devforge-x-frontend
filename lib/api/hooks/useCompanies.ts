@@ -87,3 +87,25 @@ export function useSendNdaMutation() {
     mutationFn: (companyId: string) => companiesBuilder.sendNda(companyId),
   });
 }
+export function useGenerateAgreementMutation() {
+  return useMutation({
+    mutationFn: (payload: {
+      companyId: string;
+      email: string;
+      message: string;
+      scheduleNo?: string;
+      scheduleDate?: string;
+      referredClient?: string;
+      engagementName?: string;
+      scopeSummary?: string;
+      totalClientContractValue?: number;
+      numberOfProgressPayments?: number;
+      expectedEngagementStart?: string;
+      totalReferralFee?: number;
+      numberOfInstalments?: number;
+      instalmentAmount?: number;
+      accountName?: string;
+      bsbAccount?: string;
+    }) => companiesBuilder.generateAgreement(payload),
+  });
+}

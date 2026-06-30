@@ -85,4 +85,29 @@ export const companiesBuilder = {
     );
     return data;
   },
+  generateAgreement: async ({
+    companyId,
+    email,
+    message,
+    ...restFields
+  }: {
+    companyId: string;
+    email: string;
+    message: string;
+    [key: string]: any;
+  }): Promise<Blob> => {
+    const response = await apiService.post(
+      `/companies/${companyId}/generate-agreement`,
+      {
+        email,
+        message,
+        ...restFields,
+      },
+      {
+        responseType: "blob",
+      }
+    );
+
+    return response.data as Blob;
+  },
 };

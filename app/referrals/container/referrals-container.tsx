@@ -182,84 +182,82 @@ export function ReferralsContainer() {
               startIcon={<Search className="h-4 w-4 text-muted-foreground" />}
             />
             {isAdmin && (
-              <div className="flex flex-row items-center gap-3">
-                {/* Company Search Filter */}
-<Popover open={companyOpen} onOpenChange={setCompanyOpen}>
-  <PopoverTrigger asChild>
-    <button
-      type="button"
-      role="combobox"
-      className="w-44 flex items-center justify-between font-normal text-sm border border-slate-200 rounded-md bg-white px-3 py-2 text-slate-950 shadow-sm hover:bg-slate-50 transition-colors"
-    >
-      <span className="truncate">
-        {filterCompany !== "all" && selectedCompany
-          ? selectedCompany.name
-          : "All Companies"}
-      </span>
-      <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-    </button>
-  </PopoverTrigger>
-  <PopoverContent className="w-48 p-0" align="start">
-                  
-                    <Command shouldFilter={false}>
-                      <CommandInput
-                        placeholder="Search company..."
-                        value={companySearch}
-                        onValueChange={setCompanySearch}
-                      />
-                      <CommandList>
-                        <CommandEmpty>No companies found.</CommandEmpty>
-                        <CommandGroup>
-                          <CommandItem
-                            value="all"
-                            onSelect={() => {
-                              setFilterCompany("all");
-                              setSelectedCompany(null);
-                              setCompanyOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={`mr-2 h-4 w-4 ${filterCompany === "all" ? "opacity-100" : "opacity-0"}`}
-                            />
-                            All Companies
-                          </CommandItem>
-                          {companies.map((c) => (
-                            <CommandItem
-                              key={c.id}
-                              value={c.id}
-                              onSelect={() => {
-                                setFilterCompany(c.id);
-                                setSelectedCompany(c);
-                                setCompanyOpen(false);
-                              }}
-                            >
-                              <Check
-                                className={`mr-2 h-4 w-4 ${filterCompany === c.id ? "opacity-100" : "opacity-0"}`}
-                              />
-                              <span className="truncate">{c.name}</span>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Vendor Search Filter */}
+  <div className="flex flex-row items-center gap-3">
+    <Popover open={companyOpen} onOpenChange={setCompanyOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          className="w-44 flex items-center justify-between font-normal text-sm"
+        >
+          <span className="truncate">
+            {filterCompany !== "all" && selectedCompany
+              ? selectedCompany.name
+              : "All Companies"}
+          </span>
+          <ChevronsUpDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 shrink-0 opacity-50 ml-2" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-48 p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search company..."
+            value={companySearch}
+            onValueChange={setCompanySearch}
+          />
+          <CommandList>
+            <CommandEmpty>No companies found.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="all"
+                onSelect={() => {
+                  setFilterCompany("all");
+                  setSelectedCompany(null);
+                  setCompanyOpen(false);
+                }}
+              >
+                <Check
+                  className={`mr-2 h-4 w-4 ${filterCompany === "all" ? "opacity-100" : "opacity-0"}`}
+                />
+                All Companies
+              </CommandItem>
+              {companies.map((c) => (
+                <CommandItem
+                  key={c.id}
+                  value={c.id}
+                  onSelect={() => {
+                    setFilterCompany(c.id);
+                    setSelectedCompany(c);
+                    setCompanyOpen(false);
+                  }}
+                >
+                  <Check
+                    className={`mr-2 h-4 w-4 ${filterCompany === c.id ? "opacity-100" : "opacity-0"}`}
+                  />
+                  <span className="truncate">{c.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+            
 <Popover open={vendorOpen} onOpenChange={setVendorOpen}>
   <PopoverTrigger asChild>
-    <button
-      type="button"
-      role="combobox"
-      className="w-44 flex items-center justify-between font-normal text-sm border border-slate-200 rounded-md bg-white px-3 py-2 text-slate-950 shadow-sm hover:bg-slate-50 transition-colors"
-    >
+    <Button
+  variant="outline"
+  role="combobox"
+  className="w-44 flex items-center justify-between font-normal text-sm"
+>
+  <span className="truncate"></span>
       <span className="truncate">
         {filterVendor !== "all" && selectedVendor
           ? selectedVendor.name
           : "All Vendors"}
       </span>
-      <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-    </button>
+      <ChevronsUpDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 shrink-0 opacity-50 ml-2" />
+    </Button>
   </PopoverTrigger>
   <PopoverContent className="w-48 p-0" align="start">
                     <Command shouldFilter={false}>

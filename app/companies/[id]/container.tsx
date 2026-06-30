@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/shared/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, FileText, Building2, ShieldCheck } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, FileText, Building2, ShieldCheck, FileCheck } from 'lucide-react';
 import { useCompaniesQuery, useGenerateNdaMutation } from '@/lib/api/hooks/useCompanies';
 import { useAuth } from '@/lib/auth/auth-context';
 import { NdaTemplateModal } from '@/components/shared/nda-template-modal';
+import { AgreementTemplateModal } from '@/components/shared/agreement-template-modal';
 import { ReportList } from '@/components/reports';
 import { toast } from 'sonner';
 
@@ -18,6 +20,7 @@ export function CompanyDetailContainer() {
   const isAdmin = profile?.role === 'admin';
   const generateNdaMutation = useGenerateNdaMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAgreementModalOpen, setIsAgreementModalOpen] = useState(false);
 
   const { data, isLoading } = useCompaniesQuery({ page: 1, page_size: 100 });
   const company = data?.companies?.find((c: any) => c.id === id) as (any & {
@@ -26,8 +29,39 @@ export function CompanyDetailContainer() {
 
   if (isLoading) {
     return (
-      <div className="p-8 max-w-5xl mx-auto text-center text-slate-500 animate-pulse">
-        Loading...
+      <div className="space-y-6 max-w-5xl mx-auto p-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-9 w-36" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-32" />
+            <Skeleton className="h-9 w-44" />
+          </div>
+        </div>
+
+        <Card className="border-slate-200 shadow-sm bg-white rounded-xl">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-6">
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-12 w-12 rounded-xl" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-5">
+              <div>
+                <Skeleton className="h-3 w-36 mb-2" />
+                <Skeleton className="h-9 w-full rounded-md" />
+              </div>
+              <Skeleton className="h-14 w-full rounded-lg" />
+            </div>
+            <div>
+              <Skeleton className="h-3 w-28 mb-2" />
+              <Skeleton className="h-6 w-16 rounded-full" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -68,6 +102,10 @@ export function CompanyDetailContainer() {
     );
   };
 
+  const handleGenerateAgreementClick = () => {
+    setIsAgreementModalOpen(true);
+  };
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto p-6">
       <div className="flex items-center justify-between">
@@ -80,9 +118,17 @@ export function CompanyDetailContainer() {
           <ArrowLeft className="h-4 w-4" /> Back to Companies
         </Button>
 
-        <Button onClick={() => setIsModalOpen(true)} className="gap-2 bg-blue-600 text-white shadow-sm">
-          <FileText className="h-4 w-4" /> Generate NDA
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button onClick={() => setIsModalOpen(true)} className="gap-2 bg-blue-600 text-white shadow-sm">
+            <FileText className="h-4 w-4" /> Generate NDA
+          </Button>
+          <Button 
+            onClick={handleGenerateAgreementClick} 
+            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+          >
+            <FileCheck className="h-4 w-4" /> Generate Agreement
+          </Button>
+        </div>
       </div>
 
       <Card className="border-slate-200 shadow-sm bg-white rounded-xl">
@@ -134,6 +180,14 @@ export function CompanyDetailContainer() {
         isPending={generateNdaMutation.isPending}
       />
 
+      <AgreementTemplateModal 
+  isOpen={isAgreementModalOpen}
+  onClose={() => setIsAgreementModalOpen(false)}
+  companyId={company.id}
+  initialEmail={company.vendor?.email || ''}
+  companyName={company.name}
+  vendorName={company.vendor?.name || ''}
+/>
       {isAdmin && (
         <Card className="border-slate-200 shadow-sm bg-white rounded-xl">
           <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-6">
