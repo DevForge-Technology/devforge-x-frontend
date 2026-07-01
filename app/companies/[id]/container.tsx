@@ -12,6 +12,7 @@ import { NdaTemplateModal } from '@/components/shared/nda-template-modal';
 import { AgreementTemplateModal } from '@/components/shared/agreement-template-modal';
 import { ReportList } from '@/components/reports';
 import { toast } from 'sonner';
+import NiceModal from '@ebay/nice-modal-react';
 
 export function CompanyDetailContainer() {
   const { id } = useParams();
@@ -19,8 +20,6 @@ export function CompanyDetailContainer() {
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
   const generateNdaMutation = useGenerateNdaMutation();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isAgreementModalOpen, setIsAgreementModalOpen] = useState(false);
 
   const { data, isLoading } = useCompaniesQuery({ page: 1, page_size: 100 });
   const company = data?.companies?.find((c: any) => c.id === id) as (any & {
@@ -76,7 +75,6 @@ export function CompanyDetailContainer() {
   }
 
   const processNdaSubmission = ({ email, message }: { email: string; message: string }) => {
-    setIsModalOpen(false);
     const toastId = toast.loading(`Generating and dispatching email to ${email}...`);
 
     generateNdaMutation.mutate(
@@ -102,8 +100,23 @@ export function CompanyDetailContainer() {
     );
   };
 
+  const handleGenerateNdaClick = () => {
+  NiceModal.show(NdaTemplateModal, {
+    initialEmail: company.vendor?.email || '',
+    companyName: company.name,
+    vendorName: company.vendor?.name || '',
+    onConfirm: processNdaSubmission,
+    isPending: generateNdaMutation.isPending,
+  });
+};
+
   const handleGenerateAgreementClick = () => {
-    setIsAgreementModalOpen(true);
+    NiceModal.show(AgreementTemplateModal, {
+      companyId: company.id,
+      initialEmail: company.vendor?.email || '',
+      companyName: company.name,
+      vendorName: company.vendor?.name || '',
+    });
   };
 
   return (
@@ -119,9 +132,9 @@ export function CompanyDetailContainer() {
         </Button>
 
         <div className="flex items-center gap-3">
-          <Button onClick={() => setIsModalOpen(true)} className="gap-2 bg-blue-600 text-white shadow-sm">
-            <FileText className="h-4 w-4" /> Generate NDA
-          </Button>
+          <Button onClick={handleGenerateNdaClick} className="gap-2 bg-blue-600 text-white shadow-sm">
+  <FileText className="h-4 w-4" /> Generate NDA
+</Button>
           <Button 
             onClick={handleGenerateAgreementClick} 
             className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
@@ -170,24 +183,6 @@ export function CompanyDetailContainer() {
         </CardContent>
       </Card>
 
-      <NdaTemplateModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        initialEmail={company.vendor?.email || ''}
-        companyName={company.name}
-        vendorName={company.vendor?.name || ''}
-        onConfirm={processNdaSubmission}
-        isPending={generateNdaMutation.isPending}
-      />
-
-      <AgreementTemplateModal 
-  isOpen={isAgreementModalOpen}
-  onClose={() => setIsAgreementModalOpen(false)}
-  companyId={company.id}
-  initialEmail={company.vendor?.email || ''}
-  companyName={company.name}
-  vendorName={company.vendor?.name || ''}
-/>
       {isAdmin && (
         <Card className="border-slate-200 shadow-sm bg-white rounded-xl">
           <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-6">
