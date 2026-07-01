@@ -72,7 +72,7 @@ export const NdaTemplateModal = NiceModal.create<NdaTemplateModalProps>(({
         );
 
         formik.resetForm();
-        // modal.hide();
+        modal.hide();
       },
       onError: (err) => {
         console.error(err);
@@ -84,16 +84,12 @@ export const NdaTemplateModal = NiceModal.create<NdaTemplateModalProps>(({
   );
 },  });
 
-  useEffect(() => {
-    if (!modal.visible) {
-      formik.resetForm();
-    }
-  }, [modal.visible]);
+
 
   return (
     <Dialog
   open={modal.visible}
-  onOpenChange={(open) => !open && modal.hide()}
+  onOpenChange={(open) => !open && modal.remove()}
 >
       <DialogContent aria-describedby={undefined} className="max-w-2xl bg-white rounded-xl">
         <DialogHeader>
