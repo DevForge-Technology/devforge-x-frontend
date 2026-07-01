@@ -87,6 +87,7 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
             name: values.name,
             email: values.email,
             designation: values.designation,
+            companyIds: values.companyIds,
           },
           {
             onSuccess: () => {

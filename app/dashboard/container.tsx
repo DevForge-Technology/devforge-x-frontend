@@ -191,7 +191,7 @@ export function DashboardContainer() {
                 <div>
                   <CardTitle className="text-lg font-bold text-slate-900">Recent Referrals</CardTitle>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => router.push('/referrals')} className="gap-1 text-blue-600">
+                <Button variant="ghost" size="sm" onClick={() => router.push('/referrals')} className="gap-1 text-primary hover:bg-primary/10">
                   View all <ArrowRight className="h-4 w-4" />
                 </Button>
               </CardHeader>

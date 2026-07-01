@@ -125,7 +125,7 @@ export function CompaniesContainer() {
                     <button
         type="button"
         onClick={() => router.push(`/companies/${company.id}`)}
-        className="font-medium text-blue-600 hover:text-blue-800 hover:underline transition-all text-left focus:outline-none"
+        className="font-medium text-slate-900 hover:text-primary hover:underline transition-all text-left focus:outline-none"
       >
                     {company.name}
                     </button>

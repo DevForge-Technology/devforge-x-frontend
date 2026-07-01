@@ -7,28 +7,31 @@ import dynamic from "next/dynamic";
 import { Mail, Loader2 } from "lucide-react";
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { useFormik } from 'formik';
+import { toast } from "sonner";
+import { useGenerateNdaMutation } from "@/lib/api/hooks/useCompanies";
 
 const ReactQuill = dynamic(() => import("react-quill"), {
   ssr: false,
 });
 
 interface NdaTemplateModalProps {
+  companyId: string;
   initialEmail: string;
   companyName: string;
   vendorName: string;
-  onConfirm: (payload: {
-    email: string;
-    message: string;
-  }) => void;
-  isPending: boolean;
 }
 
 export const NdaTemplateModal = NiceModal.create<NdaTemplateModalProps>(({
+ companyId,
   initialEmail,
-  onConfirm,
-  isPending
+  companyName,
 }) => {
   const modal = useModal();
+
+  const {
+  mutate: generateNdaMutation,
+  isPending: isGenerateNdaPending,
+} = useGenerateNdaMutation();
 
   const formik = useFormik({
     initialValues: {
@@ -37,20 +40,49 @@ export const NdaTemplateModal = NiceModal.create<NdaTemplateModalProps>(({
     },
     enableReinitialize: true,
     onSubmit: (values) => {
-      if (!values.email) return;
+  if (!values.email) return;
 
-      const cleanTextCheck = values.message.replace(/<(.|\n)*?>/g, "").trim();
-      const cleanMessage = cleanTextCheck === "" ? "" : values.message;
+  const cleanTextCheck = values.message.replace(/<(.|\n)*?>/g, "").trim();
+  const cleanMessage = cleanTextCheck === "" ? "" : values.message;
 
-      onConfirm({
-        email: values.email,
-        message: cleanMessage,
-      });
+  const toastId = toast.loading(
+    `Generating and dispatching email to ${values.email}...`
+  );
 
-      formik.resetForm();
-      modal.hide();
+  generateNdaMutation(
+    {
+      companyId,
+      email: values.email,
+      message: cleanMessage,
     },
-  });
+    {
+      onSuccess: (fileBlob) => {
+        const downloadUrl = window.URL.createObjectURL(fileBlob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = `NDA_${companyName.replace(/\s+/g, "_")}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+
+        toast.success(
+          "NDA downloaded and customized email sent successfully!",
+          { id: toastId }
+        );
+
+        formik.resetForm();
+        // modal.hide();
+      },
+      onError: (err) => {
+        console.error(err);
+        toast.error("Could not process agreement delivery.", {
+          id: toastId,
+        });
+      },
+    }
+  );
+},  });
 
   useEffect(() => {
     if (!modal.visible) {
@@ -59,11 +91,14 @@ export const NdaTemplateModal = NiceModal.create<NdaTemplateModalProps>(({
   }, [modal.visible]);
 
   return (
-    <Dialog open={modal.visible} onOpenChange={() => modal.hide()}>
+    <Dialog
+  open={modal.visible}
+  onOpenChange={(open) => !open && modal.hide()}
+>
       <DialogContent aria-describedby={undefined} className="max-w-2xl bg-white rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Mail className="h-5 w-5 text-blue-600" /> Dispatch NDA Agreement
+            <Mail className="h-5 w-5 text-primary" /> Dispatch NDA Agreement
           </DialogTitle>
         </DialogHeader>
 
@@ -98,13 +133,13 @@ export const NdaTemplateModal = NiceModal.create<NdaTemplateModalProps>(({
           </div>
 
           <DialogFooter className="pt-4 border-t border-slate-100">
-            <Button variant="outline" type="button" onClick={() => modal.hide()} disabled={isPending}>
+            <Button variant="outline" type="button" onClick={() => modal.hide()} disabled={isGenerateNdaPending}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending} className="bg-blue-600 text-white hover:bg-blue-700 font-medium min-w-[145px]">
+            <Button type="submit" disabled={isGenerateNdaPending} className="bg-primary text-white hover:bg-primary/90 font-medium min-w-[145px]">
               <div className="relative w-full h-full flex items-center justify-center">
-                <span className="absolute flex items-center justify-center" style={{ visibility: isPending ? 'visible' : 'hidden' }}><Loader2 className="h-4 w-4 animate-spin" /></span>
-                <span style={{ visibility: isPending ? 'hidden' : 'visible' }}>Confirm & Send</span>
+                <span className="absolute flex items-center justify-center" style={{ visibility: isGenerateNdaPending ? 'visible' : 'hidden' }}><Loader2 className="h-4 w-4 animate-spin" /></span>
+                <span style={{ visibility: isGenerateNdaPending ? 'hidden' : 'visible' }}>Confirm & Send</span>
               </div>
             </Button>
           </DialogFooter>

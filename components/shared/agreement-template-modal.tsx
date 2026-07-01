@@ -223,7 +223,7 @@ export const AgreementTemplateModal = NiceModal.create<AgreementTemplateModalPro
               Cancel
             </Button>
             
-            <Button type="submit" disabled={isPending} className="bg-blue-600 text-white hover:bg-blue-700 font-medium min-w-[145px]">
+            <Button type="submit" disabled={isPending} className="bg-primary text-white hover:bg-primary/90 font-medium min-w-[145px]">
               <div className="relative w-full h-full flex items-center justify-center">
                 <span className="absolute flex items-center justify-center" style={{ visibility: isPending ? 'visible' : 'hidden' }}><Loader2 className="h-4 w-4 animate-spin" /></span>
                 <span style={{ visibility: isPending ? 'hidden' : 'visible' }}>Generate & Send</span>

@@ -6,7 +6,7 @@ import { Button } from '@/shared/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, FileText, Building2, ShieldCheck, FileCheck } from 'lucide-react';
-import { useCompaniesQuery, useGenerateNdaMutation } from '@/lib/api/hooks/useCompanies';
+import { useCompaniesQuery } from '@/lib/api/hooks/useCompanies';
 import { useAuth } from '@/lib/auth/auth-context';
 import { NdaTemplateModal } from '@/components/shared/nda-template-modal';
 import { AgreementTemplateModal } from '@/components/shared/agreement-template-modal';
@@ -19,7 +19,6 @@ export function CompanyDetailContainer() {
   const router = useRouter();
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
-  const generateNdaMutation = useGenerateNdaMutation();
 
   const { data, isLoading } = useCompaniesQuery({ page: 1, page_size: 100 });
   const company = data?.companies?.find((c: any) => c.id === id) as (any & {
@@ -74,39 +73,12 @@ export function CompanyDetailContainer() {
     );
   }
 
-  const processNdaSubmission = ({ email, message }: { email: string; message: string }) => {
-    const toastId = toast.loading(`Generating and dispatching email to ${email}...`);
-
-    generateNdaMutation.mutate(
-      { companyId: company.id, email, message },
-      {
-        onSuccess: (fileBlob) => {
-          const downloadUrl = window.URL.createObjectURL(fileBlob);
-          const link = document.createElement('a');
-          link.href = downloadUrl;
-          link.setAttribute('download', `NDA_${company.name.replace(/\s+/g, '_')}.pdf`);
-          document.body.appendChild(link);
-          link.click();
-          link.parentNode?.removeChild(link);
-          window.URL.revokeObjectURL(downloadUrl);
-
-          toast.success('NDA downloaded and customized email sent successfully!', { id: toastId });
-        },
-        onError: (err) => {
-          console.error('Pipeline Failure:', err);
-          toast.error('Could not process agreement delivery.', { id: toastId });
-        },
-      }
-    );
-  };
-
   const handleGenerateNdaClick = () => {
   NiceModal.show(NdaTemplateModal, {
+    companyId: company.id,
     initialEmail: company.vendor?.email || '',
     companyName: company.name,
     vendorName: company.vendor?.name || '',
-    onConfirm: processNdaSubmission,
-    isPending: generateNdaMutation.isPending,
   });
 };
 
@@ -132,12 +104,12 @@ export function CompanyDetailContainer() {
         </Button>
 
         <div className="flex items-center gap-3">
-          <Button onClick={handleGenerateNdaClick} className="gap-2 bg-blue-600 text-white shadow-sm">
+          <Button onClick={handleGenerateNdaClick} className="gap-2 bg-primary text-white shadow-sm">
   <FileText className="h-4 w-4" /> Generate NDA
 </Button>
           <Button 
             onClick={handleGenerateAgreementClick} 
-            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+            className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-sm"
           >
             <FileCheck className="h-4 w-4" /> Generate Agreement
           </Button>
@@ -147,7 +119,7 @@ export function CompanyDetailContainer() {
       <Card className="border-slate-200 shadow-sm bg-white rounded-xl">
         <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-6">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+            <div className="p-3 bg-primary/10 text-primary rounded-xl">
               <Building2 className="h-6 w-6" />
             </div>
             <div>
@@ -166,17 +138,17 @@ export function CompanyDetailContainer() {
                 {company.id}
               </p>
             </div>
-            <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 rounded-lg p-3">
-              <ShieldCheck className="h-5 w-5 text-emerald-500" />
-              <div>
-                <span className="block font-medium text-emerald-800">Operational Verification Status</span>
-                <span className="text-xs text-emerald-600">Active Pipeline Layer</span>
-              </div>
-            </div>
+           <div className="flex items-center gap-3 bg-primary/5 border border-primary/10 rounded-lg p-3">
+  <ShieldCheck className="h-5 w-5 text-primary" />
+  <div>
+    <span className="block font-medium text-slate-800">Operational Verification Status</span>
+    <span className="text-xs text-primary font-medium">Active Pipeline Layer</span>
+  </div>
+</div>
           </div>
           <div>
             <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Account Status</h4>
-            <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 mt-1.5 capitalize">
+            <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 mt-1.5 capitalize">
               {company.status || 'Active'}
             </span>
           </div>

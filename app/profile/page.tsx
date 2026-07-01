@@ -88,7 +88,7 @@ export default function ProfilePage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-6 w-full">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
           <p className="text-muted-foreground">Manage your account settings</p>
@@ -119,6 +119,7 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={profileForm.handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
@@ -147,6 +148,7 @@ export default function ProfilePage() {
                 {profileForm.touched.email && profileForm.errors.email ? (
                   <div className="text-xs text-destructive">{profileForm.errors.email}</div>
                 ) : null}
+              </div>
               </div>
               <div className="space-y-1">
                 <Label className="text-muted-foreground text-xs">Role</Label>
@@ -182,6 +184,7 @@ export default function ProfilePage() {
                   <div className="text-xs text-destructive">{passwordForm.errors.currentPassword}</div>
                 ) : null}
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
                 <Input
@@ -209,6 +212,7 @@ export default function ProfilePage() {
                 {passwordForm.touched.confirmPassword && passwordForm.errors.confirmPassword ? (
                   <div className="text-xs text-destructive">{passwordForm.errors.confirmPassword}</div>
                 ) : null}
+              </div>
               </div>
               <Button type="submit" disabled={changingPassword}>
                 {changingPassword ? "Changing..." : "Change Password"}
