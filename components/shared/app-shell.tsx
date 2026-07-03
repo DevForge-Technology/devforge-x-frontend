@@ -30,15 +30,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-slate-50 to-white">
+    <div className="min-h-screen bg-slate-50/50">
       <Sidebar />
-      <main className="pl-60 min-h-screen">
-        <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-          <div className="rounded-[2rem] border border-slate-200/80 bg-white/95 shadow-2xl shadow-slate-200/40 backdrop-blur-xl">
-            <div className="p-6 lg:p-8">{children}</div>
-          </div>
+      <main className="pl-60 min-h-screen w-full flex flex-col">
+        <div className="p-6 lg:p-10 w-full flex-1 overflow-x-auto">
+          {children}
         </div>
       </main>
     </div>
   );
 }
+

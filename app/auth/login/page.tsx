@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Shield, AlertCircle } from "lucide-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import Image from "next/image";
 
 const loginSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email address").required("Email is required"),
@@ -55,7 +56,7 @@ export default function LoginPage() {
     <div className="min-h-screen grid bg-white lg:grid-cols-[minmax(420px,60%)_1fr]">
       <section className="hidden bg-primary px-10 py-16 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="max-w-md">
-          <div className="text-5xl mb-8">🚀</div>
+         
           <h1 className="text-5xl font-bold leading-tight tracking-normal">Hello Devforger!!</h1>
           <p className="mt-6 text-xl font-medium">A place where technology meets standards!!</p>
         </div>
@@ -64,7 +65,16 @@ export default function LoginPage() {
       <div className="flex min-h-screen items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">DevForge[x]</h1>
+            <div className="flex justify-center mb-3">
+    <Image 
+      src="/logo.png" 
+      alt="Devforge Logo" 
+      className="object-contain"
+      width={130}
+      height={32}
+      priority
+    />
+  </div>
             <p className="text-muted-foreground mt-1">Sign in to your workspace</p>
           </div>
 
