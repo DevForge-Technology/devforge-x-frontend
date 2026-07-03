@@ -24,8 +24,16 @@ export function useUploadReportMutation(
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ companyId, file }) => reportsBuilder.upload(companyId, file),
-    onSuccess: (data: Report) => {
-      qc.invalidateQueries({ queryKey: ['reports', data.companyId] });
+    onSuccess: (data: Report, variables) => {
+      const targetCompanyId = variables.companyId || data?.companyId;
+     if (targetCompanyId) {
+  qc.invalidateQueries({ 
+    queryKey: ['reports', targetCompanyId],
+    exact: false
+  });
+} else {
+  qc.invalidateQueries({ queryKey: ['reports'] });
+}
     },
     ...options,
   });

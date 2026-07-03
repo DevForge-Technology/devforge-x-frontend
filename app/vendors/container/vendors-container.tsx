@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button, Input, Table } from "@/shared/ui";
 import { Badge } from "@/components/ui/badge";
-import { Building2, KeyRound, Plus, Search, Trash2, Pencil } from "lucide-react";
+import { Building2, Plus, Search, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { extractError } from "@/lib/services/apiService";
 import { format } from "date-fns";
 import NiceModal from "@ebay/nice-modal-react";
 import { useUsersQuery, useDeleteUserMutation } from "@/lib/api/hooks/useUsers";
@@ -24,7 +23,6 @@ export function VendorsContainer() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  // Debounce search
   useEffect(() => {
     const handler = setTimeout(() => {
       setPage(1);
@@ -33,7 +31,6 @@ export function VendorsContainer() {
     return () => clearTimeout(handler);
   }, [search]);
 
-  // Query vendors using react-query hook
   const { data, isLoading, isFetching } = useUsersQuery({
     search: debouncedSearch || undefined,
     page,
@@ -61,11 +58,7 @@ export function VendorsContainer() {
   }
 
   function openEdit(vendor: Profile) {
-      NiceModal.show(VendorModal, { editingVendor: vendor });
-    }
-
-  function openResetPassword(vendor: Profile) {
-    NiceModal.show(ResetPasswordModal, { selectedVendor: vendor });
+    NiceModal.show(VendorModal, { editingVendor: vendor });
   }
 
   async function handleDelete(vendorId: string) {
@@ -105,16 +98,19 @@ export function VendorsContainer() {
       </div>
 
       <Card className="border-blue-100 shadow-sm">
-        <CardHeader className="pb-3">
-        <Input
-          placeholder="Search vendors by name or email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-md pl-4"
-          startIcon={<Search className="h-4 w-4 text-muted-foreground" />}
-        />
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
+          <Input
+            placeholder="Search vendors by name or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-md"
+            startIcon={<Search className="h-4 w-4 text-muted-foreground" />}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="border-blue-100 shadow-sm">
+        <CardContent className="pt-6">
           <Table<VendorRow>
             columns={[
               {
@@ -132,14 +128,14 @@ export function VendorsContainer() {
                 ),
               },
               {
-  key: "designation",
-  header: "Designation",
-  render: (vendor) => (
-    <span className="text-muted-foreground">
-      {vendor.designation || "-"}
-    </span>
-  ),
-},
+                key: "designation",
+                header: "Designation",
+                render: (vendor) => (
+                  <span className="text-muted-foreground">
+                    {vendor.designation || "-"}
+                  </span>
+                ),
+              },
               {
                 key: "companies",
                 header: "Assigned Companies",
@@ -173,7 +169,7 @@ export function VendorsContainer() {
                   </span>
                 ),
               },
-              { 
+              {
                 key: "actions",
                 header: "Actions",
                 align: "right",
@@ -196,8 +192,8 @@ export function VendorsContainer() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    </div>
-               ),
+                  </div>
+                ),
               },
             ]}
             data={vendors}

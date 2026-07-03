@@ -6,6 +6,7 @@ import { Report } from '@/lib/api/builders/reports';
 import { useAuth } from '@/lib/auth/auth-context';
 import NiceModal from "@ebay/nice-modal-react";
 import { ConfirmationDeleteModal } from "@/components/shared/confirmation-delete-modal";
+
 interface ReportListProps {
   companyId: string;
   isAdmin?: boolean;
@@ -14,17 +15,27 @@ interface ReportListProps {
 export function ReportList({ companyId, isAdmin = false }: ReportListProps) {
   const { data, isLoading, error } = useCompanyReportsQuery(companyId);
   const deleteMutation = useDeleteReportMutation();
-  const { profile } = useAuth()
+  const { profile } = useAuth();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleDelete = (reportId: string) => {
-  NiceModal.show(ConfirmationDeleteModal, {
-    title: "Confirm Delete ?",
-    description: "Are you sure want to delete this report?",
-    payload: reportId,
-    mutation: deleteMutation,
-    successMessage: "Report deleted successfully!",
-  });
-};
+  const handleDelete = async (reportId: string) => {
+    try {
+      await NiceModal.show(ConfirmationDeleteModal, {
+        title: "Confirm Delete ?",
+        description: "Are you sure want to delete this report?",
+        payload: reportId,
+        mutation: deleteMutation,
+        successMessage: "Report deleted successfully!",
+      });
+      
+      setDeletingId(reportId);
+      await deleteMutation.mutateAsync(reportId);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const handleDownload = async (report: Report) => {
     try {
@@ -33,7 +44,7 @@ export function ReportList({ companyId, isAdmin = false }: ReportListProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = report.fileName; // preserves original name + extension
+      a.download = report.fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -63,45 +74,47 @@ export function ReportList({ companyId, isAdmin = false }: ReportListProps) {
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Uploaded Reports</h2>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300">
-          <thead className="bg-gray-100">
+        <table className="w-full border-collapse border border-primary/20">
+          <thead className="bg-primary/10">
             <tr>
-              <th className="border border-gray-300 p-2 text-left">File Name</th>
-              <th className="border border-gray-300 p-2 text-left">Size (KB)</th>
-              <th className="border border-gray-300 p-2 text-left">Uploaded Date</th>
-              {
-                profile?.role === "vendor" &&
-                <th className="border border-gray-300 p-2 text-left">
-                  Action
-                </th>
-              }
+              <th className="border border-primary/10 p-2 text-left">File Name</th>
+              <th className="border border-primary/10 p-2 text-left">Size (KB)</th>
+              <th className="border border-primary/10 p-2 text-left">Uploaded Date</th>
+              {profile?.role === "vendor" && (
+                <th className="border border-primary/10 p-2 text-left">Action</th>
+              )}
             </tr>
           </thead>
           <tbody>
             {data.data.map((report: Report) => (
               <tr key={report.id} className="hover:bg-gray-50">
-                <td className="border border-gray-300 p-2">
+                <td className="border border-primary/10 p-2">
                   <button
                     onClick={() => handleDownload(report)}
-                    className="text-blue-600 hover:underline text-left"
+                    className="text-slate-900 hover:text-primary hover:underline text-left"
                   >
                     {report.fileName}
                   </button>
                 </td>
-                <td className="border border-gray-300 p-2 text-sm">{(report.fileSize / 1024).toFixed(2)}</td>
-                <td className="border border-gray-300 p-2 text-sm">
+                <td className="border border-primary/10 p-2 text-sm">
+                  {(report.fileSize / 1024).toFixed(2)}
+                </td>
+                <td className="border border-primary/10 p-2 text-sm">
                   {new Date(report.createdAt).toLocaleDateString()}
                 </td>
-                {profile?.role === "vendor" && <td className="border border-gray-300 p-2">
-                  <Button
-  variant="destructive"
-  size="sm"
-  loading={deleteMutation.isPending}
-  onClick={() => handleDelete(report.id)}
->
-  Delete
-</Button>
-                </td>}
+                {profile?.role === "vendor" && (
+                  <td className="border border-primary/10 p-2">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      loading={deletingId === report.id}
+                      disabled={deletingId !== null && deletingId !== report.id}
+                      onClick={() => handleDelete(report.id)}
+                    >
+                      Delete
+                    </Button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -119,4 +132,3 @@ export function ReportList({ companyId, isAdmin = false }: ReportListProps) {
     </div>
   );
 }
-
