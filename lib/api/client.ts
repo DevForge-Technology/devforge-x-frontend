@@ -5,6 +5,7 @@
 import { usersBuilder } from './builders/users';
 import { companiesBuilder } from './builders/companies';
 import { referralsBuilder } from './builders/referrals';
+import { reportsBuilder } from './builders/reports';
 import { toCompany, toProfile, toReferral, type Profile, type Company, type Referral } from '../types';
 
 export async function createVendor(name: string, email: string, companyIds: string[] = []) {
@@ -161,3 +162,17 @@ export async function generateCompanyNDA(id: string) {
   });
   return response.data;
 }
+
+export async function uploadReport(companyId: string, file: File) {
+  return reportsBuilder.upload(companyId, file);
+}
+
+export async function getCompanyReports(companyId: string, params?: { page?: number; page_size?: number }) {
+  return reportsBuilder.getCompanyReports(companyId, params);
+}
+
+
+export async function deleteReport(reportId: string) {
+  return reportsBuilder.delete(reportId);
+}
+

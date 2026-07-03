@@ -290,7 +290,7 @@ export const ReferralModal = NiceModal.create(({ editingReferral }: ReferralModa
                         ? selectedCompany.name
                         : "Select company"}
                     </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronsUpDown className="absolute right-3 top-1/2 -translate-y-1/2 ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">

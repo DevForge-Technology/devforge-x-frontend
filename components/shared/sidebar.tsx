@@ -10,7 +10,6 @@ import {
   FileText,
   UserCircle,
   LogOut,
-  Shield,
   ChevronLeft,
   Menu,
 } from "lucide-react";
@@ -20,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
+import Image from "next/image";
 
 interface NavItem {
   label: string;
@@ -53,15 +53,33 @@ export function Sidebar() {
           collapsed ? "w-16" : "w-60"
         )}
       >
-        <div className="flex items-center gap-3 px-4 h-16 shrink-0 border-b border-slate-100">
-          {!collapsed && (
-            <span className="font-bold text-sm tracking-tight text-slate-900 truncate">DevForge[x]</span>
-          )}
+        <div className="flex items-center gap-2 px-3 h-16 shrink-0 border-b border-slate-100">
+          <div className="flex-1 flex items-center justify-start overflow-hidden pl-1">
+            {collapsed ? (
+              <Image 
+                src="/Devforge Deliverables-12.png" 
+                alt="Devforge Mini Logo" 
+                width={28} 
+                height={28} 
+                className="object-contain min-w-[28px]"
+                priority
+              />
+            ) : (
+              <Image 
+                src="/logo.png" 
+                alt="Devforge Logo" 
+                width={130} 
+                height={32} 
+                className="object-contain"
+                priority
+              />
+            )}
+          </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setCollapsed(!collapsed)}
-            className="ml-auto text-slate-400 hover:text-slate-800 hover:bg-slate-100 h-7 w-7"
+            className="text-slate-400 hover:text-slate-800 hover:bg-slate-100 h-7 w-7 shrink-0"
           >
             {collapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>

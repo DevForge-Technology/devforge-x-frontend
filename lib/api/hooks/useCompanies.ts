@@ -74,6 +74,38 @@ export function useCompanyVendors(companyId : string){
 }
 export function useGenerateNdaMutation() {
   return useMutation({
-    mutationFn: (companyId: string) => companiesBuilder.generateNda(companyId),
+    mutationFn: (payload: {
+      companyId: string;
+      email: string;
+      message: string;
+    }) => companiesBuilder.generateNda(payload),
+  });
+}
+
+export function useSendNdaMutation() {
+  return useMutation({
+    mutationFn: (companyId: string) => companiesBuilder.sendNda(companyId),
+  });
+}
+export function useGenerateAgreementMutation() {
+  return useMutation({
+    mutationFn: (payload: {
+      companyId: string;
+      email: string;
+      message: string;
+      scheduleNo?: string;
+      scheduleDate?: string;
+      referredClient?: string;
+      engagementName?: string;
+      scopeSummary?: string;
+      totalClientContractValue?: number;
+      numberOfProgressPayments?: number;
+      expectedEngagementStart?: string;
+      totalReferralFee?: number;
+      numberOfInstalments?: number;
+      instalmentAmount?: number;
+      accountName?: string;
+      bsbAccount?: string;
+    }) => companiesBuilder.generateAgreement(payload),
   });
 }
