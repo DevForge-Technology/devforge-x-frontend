@@ -87,6 +87,21 @@ export function useSendNdaMutation() {
     mutationFn: (companyId: string) => companiesBuilder.sendNda(companyId),
   });
 }
+export function useApproveNdaMutation() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: {
+      companyId: string;
+      email: string;
+      message: string;
+    }) => companiesBuilder.generateNda(payload),
+
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['companies', 'mine'] });
+    },
+  });
+}
 export function useGenerateAgreementMutation() {
   return useMutation({
     mutationFn: (payload: {

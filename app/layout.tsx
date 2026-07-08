@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import { QueryProvider } from "@/lib/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
+import NextTopLoader from 'nextjs-toploader';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen bg-primary/5 antialiased`}>
+      <NextTopLoader color="hsl(var(--primary))" height={2} showSpinner={false} zIndex={9999} />
         <QueryProvider>
           <AuthProvider>
             {children}

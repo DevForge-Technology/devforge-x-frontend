@@ -85,6 +85,12 @@ export const companiesBuilder = {
     );
     return data;
   },
+  approveNda: async (id: string) => {
+  const { data } = await apiService.patch(
+    `/companies/${id}/approve-nda`
+  );
+  return data;
+},
   generateAgreement: async ({
     companyId,
     email,

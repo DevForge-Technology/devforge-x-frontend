@@ -18,7 +18,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{
     roles?: string | null; error: string | null; mustChangePassword?: boolean 
-}>;
+  }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -84,42 +84,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message, roles: null, mustChangePassword: false };
+    
     const user = data?.user;
+    const roles = user?.user_metadata?.role || "user";
+    const mustChangePassword = user?.user_metadata?.must_change_password === true;
 
-    const { data: profile, error: profileError } = await supabase
-    .from("users")
-    .select("roles, must_change_password")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError) return { error: profileError.message, roles: null, mustChangePassword: false };
-
-
-    // Wait for auth state to be updated by onAuthStateChange
     await new Promise<void>((resolve) => {
       const checkUser = setInterval(() => {
-        if (data.session?.user && profile) {
+        if (data.session?.user) {
           clearInterval(checkUser);
           resolve();
         }
       }, 50);
       
-      // Timeout after 5 seconds
       setTimeout(() => {
         clearInterval(checkUser);
         resolve();
       }, 5000);
     });
 
-   
-  
-  return {
-    error: null,
-    mustChangePassword:
-      data.user.user_metadata?.must_change_password === true,
-    roles: profile?.roles || "user",
+    return {
+      error: null,
+      mustChangePassword,
+      roles,
+    };
   };
-};
 
   const signOut = async () => {
     await supabase.auth.signOut();

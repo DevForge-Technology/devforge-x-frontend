@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth/auth-context";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { useEffect } from "react";
 
 export default function Home() {

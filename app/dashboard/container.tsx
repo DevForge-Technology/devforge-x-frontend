@@ -38,11 +38,16 @@ export function DashboardContainer() {
   });
   const [recentReferrals, setRecentReferrals] = useState<Referral[]>([]);
   const [vendorCompanies, setVendorCompanies] = useState<Company[]>([]);
-  const [vendorReferralCount, setVendorReferralCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+  const [contracts, setContracts] = useState<any[]>([]);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const [viewerPdfUrl, setViewerPdfUrl] = useState<string | null>(null);
+  const [ndaReports, setNdaReports] = useState<any[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -55,21 +60,64 @@ export function DashboardContainer() {
         } else {
           const comps = profile?.assignedCompanies ?? [];
           setVendorCompanies(comps);
-          const r = await getReferrals({ page: '1', page_size: '10' });
-          setRecentReferrals(r.referrals || []);
-          setVendorReferralCount(r.referrals?.length || 0);
         }
-      } catch {
-        
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     load();
-  }, [isAdmin, profile?.assignedCompanies, profile?.last_used_company_id]);
+  }, [isAdmin, profile?.assignedCompanies]);
 
   const activeWorkspace =
     vendorCompanies.find((c) => c.id === profile?.last_used_company_id) ??
     vendorCompanies[0];
+
+  useEffect(() => {
+    if (activeWorkspace) {
+      setReportsLoading(true);
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/nda-report/${activeWorkspace.id}`)
+        .then(res => res.json())
+        .then(data => setNdaReports(data))
+        .catch(err => console.error("Failed to fetch NDA reports:", err))
+        .finally(() => setReportsLoading(false));
+    }
+  }, [activeWorkspace]);
+
+  const fetchPdfBlob = async (contract: any) => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/contracts/${contract.companyId}/pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectName: contract.projectName,
+        contractValue: contract.totalProjectValue,
+      })
+    });
+    if (!response.ok) throw new Error('Failed to generate PDF');
+    return await response.blob();
+  };
+
+  const handleDownload = async (contract: any) => {
+    setDownloadingId(contract.id);
+    const blob = await fetchPdfBlob(contract);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${contract.projectName.replace(/\s+/g, '-')}-contract.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    setDownloadingId(null);
+  };
+
+  const handleView = async (contract: any) => {
+    setViewingId(contract.id);
+    const blob = await fetchPdfBlob(contract);
+    setViewerPdfUrl(window.URL.createObjectURL(blob));
+    setViewingId(null);
+  };
 
   const triggerFileInput = (companyId: string) => {
     setSelectedCompanyId(companyId);
@@ -82,6 +130,7 @@ export function DashboardContainer() {
     }
     setIsUploadModalOpen(true);
   };
+  
   const handleRemoveStagedFile = (indexToRemove: number) => {
     setStagedFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -116,42 +165,16 @@ export function DashboardContainer() {
 
   const handleProcessUpload = async () => {
     if (stagedFiles.length === 0 || !selectedCompanyId) return;
-
     try {
       for (const file of stagedFiles) {
-        await uploadMutation.mutateAsync({
-          companyId: selectedCompanyId,
-          file,
-          dto: {},
-        });
+        await uploadMutation.mutateAsync({ companyId: selectedCompanyId, file, dto: {} });
       }
-      alert('Signed report submitted successfully for review!');
       setIsUploadModalOpen(false);
       setStagedFiles([]);
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      alert(`Error uploading report: ${error?.message || 'Unknown error occurred'}`);
-    } finally {
-      setSelectedCompanyId(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (error) {
+      console.error(error);
     }
   };
-
-  if (loading) {
-    return (
-      <AppShell>
-        <div className="space-y-6 animate-pulse">
-          <div className="h-4 w-32 bg-slate-200 rounded" />
-          <div className="h-8 w-48 bg-slate-200 rounded" />
-          <div className="grid gap-4 md:grid-cols-2">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-32 bg-slate-200 rounded-xl" />
-            ))}
-          </div>
-        </div>
-      </AppShell>
-    );
-  }
 
   const pendingNdas = vendorCompanies.filter((company: any) => {
     const status = company.ndaStatus?.toLowerCase();
@@ -307,7 +330,7 @@ export function DashboardContainer() {
         {!isAdmin && (
           <>
             {pendingNdas.length > 0 && (
-              <div className="border border-amber-200 bg-amber-50/60 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+              <div className="border border-amber-200 bg-amber-50/60 rounded-2xl p-5 shadow-sm relative overflow-hidden mb-6">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500" />
                 <div className="flex gap-4">
                   <div className="p-2 bg-amber-100 text-amber-700 rounded-xl h-fit">
@@ -333,9 +356,9 @@ export function DashboardContainer() {
                           <div>
                             <h4 className="text-sm font-bold text-slate-800">Mutual NDA - {company.name}</h4>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[11px] text-slate-400">Sent Oct 24, 2026</span>
+                              <span className="text-[11px] text-slate-400">{company.sentDate || 'Date pending'}</span>
                               <span className="text-rose-500 font-bold text-[11px] flex items-center gap-1">
-                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" /> Awaiting Signature
+                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" /> {company.statusDisplay || 'Awaiting Signature'}
                               </span>
                             </div>
                           </div>
@@ -368,7 +391,27 @@ export function DashboardContainer() {
               </div>
             )}
 
-          
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <h3 className="text-base font-bold text-slate-900 mb-4">Report History</h3>
+              {reportsLoading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              ) : (
+                <div className="space-y-3">
+                  {Array.isArray(ndaReports) && ndaReports.map((report) => (
+                    <div key={report.id} className="flex items-center justify-between p-4 border border-slate-100 rounded-xl bg-slate-50/50">
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">{report.fileName}</p>
+                        <p className="text-xs text-slate-500">Status: {report.status}</p>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${report.status === 'signed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {report.status}
+                      </span>
+                    </div>
+                  ))}
+                  {ndaReports.length === 0 && <p className="text-sm text-slate-400">No reports found.</p>}
+                </div>
+              )}
+            </div>
 
             {activeWorkspace && (
               <Card className="border border-slate-100 shadow-sm bg-white rounded-2xl mt-4">
@@ -384,9 +427,59 @@ export function DashboardContainer() {
                 </CardContent>
               </Card>
             )}
+         
+      {!isAdmin && activeWorkspace && (
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mt-6 overflow-hidden">
+                <div className="p-5 border-b border-slate-100 font-bold text-slate-900">Active Contracts</div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                        <th className="px-6 py-3 font-medium">Project Name</th>
+                        <th className="px-6 py-3 font-medium">Value</th>
+                        <th className="px-6 py-3 font-medium text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-sm">
+                      {contracts.length === 0 ? (
+                        <tr><td colSpan={3} className="px-6 py-8 text-center text-slate-500">No active contracts found.</td></tr>
+                      ) : (
+                        contracts.map((contract) => (
+                          <tr key={contract.id} className="hover:bg-slate-50/50">
+                            <td className="px-6 py-4 font-medium text-slate-900">{contract.projectName}</td>
+                            <td className="px-6 py-4 text-slate-600">${contract.totalProjectValue?.toLocaleString()}</td>
+                            <td className="px-6 py-4 text-right space-x-2">
+                              <Button variant="outline" size="sm" onClick={() => handleView(contract)} disabled={viewingId === contract.id}>
+                                {viewingId === contract.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'View'}
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => handleDownload(contract)} disabled={downloadingId === contract.id}>
+                                {downloadingId === contract.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Download'}
+                              </Button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
+
+
+      {viewerPdfUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-bold">Document Viewer</h3>
+              <Button variant="ghost" onClick={() => setViewerPdfUrl(null)}><X className="h-5 w-5" /></Button>
+            </div>
+            <iframe src={viewerPdfUrl} className="w-full flex-1" />
+          </div>
+        </div>
+      )}
 
       {isUploadModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -405,7 +498,6 @@ export function DashboardContainer() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-
             <div className="p-6 space-y-6">
               <div 
                 onClick={() => triggerFileInput(selectedCompanyId || '')}
@@ -419,7 +511,7 @@ export function DashboardContainer() {
                   <p className="text-xs text-slate-400">Supported formats: PDF (max 10MB)</p>
                 </div>
               </div>
-           
+            
               {stagedFiles.length > 0 && (
                 <div className="space-y-2 pt-2">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Selected Documents</p>
