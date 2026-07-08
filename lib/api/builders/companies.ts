@@ -91,6 +91,12 @@ export const companiesBuilder = {
   );
   return data;
 },
+  downloadNda: async (id: string): Promise<Blob> => {
+    const response = await apiService.get(`/companies/${id}/download-nda`, {
+      responseType: "blob",
+    });
+    return response.data as Blob;
+  },
   generateAgreement: async ({
     companyId,
     email,

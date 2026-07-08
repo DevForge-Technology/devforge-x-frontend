@@ -91,13 +91,10 @@ export function useApproveNdaMutation() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: {
-      companyId: string;
-      email: string;
-      message: string;
-    }) => companiesBuilder.generateNda(payload),
+    mutationFn: (companyId: string) => companiesBuilder.approveNda(companyId),
 
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['companies'] });
       qc.invalidateQueries({ queryKey: ['companies', 'mine'] });
     },
   });

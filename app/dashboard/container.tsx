@@ -5,7 +5,8 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { AppShell } from '@/components/shared/app-shell';
 import { getDashboardStats, getReferrals } from '@/lib/api/client';
 import type { Referral, Company } from '@/lib/types';
-import { useUploadReportMutation } from '@/lib/api/hooks/useReports';
+import type { Report } from '@/lib/api/builders/reports';
+import { useCompanyReportsQuery, useUploadReportMutation } from '@/lib/api/hooks/useReports';
 import { ReportList } from '@/components/reports';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/shared/ui';
@@ -46,8 +47,6 @@ export function DashboardContainer() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [viewerPdfUrl, setViewerPdfUrl] = useState<string | null>(null);
-  const [ndaReports, setNdaReports] = useState<any[]>([]);
-  const [reportsLoading, setReportsLoading] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -74,16 +73,16 @@ export function DashboardContainer() {
     vendorCompanies.find((c) => c.id === profile?.last_used_company_id) ??
     vendorCompanies[0];
 
-  useEffect(() => {
-    if (activeWorkspace) {
-      setReportsLoading(true);
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/nda-report/${activeWorkspace.id}`)
-        .then(res => res.json())
-        .then(data => setNdaReports(data))
-        .catch(err => console.error("Failed to fetch NDA reports:", err))
-        .finally(() => setReportsLoading(false));
-    }
-  }, [activeWorkspace]);
+  const {
+    data: ndaReportsData,
+    isLoading: reportsLoading,
+  } = useCompanyReportsQuery(
+    activeWorkspace?.id ?? '',
+    { page: 1, page_size: 50, type: 'NDA' },
+    { enabled: !!activeWorkspace?.id },
+  );
+
+  const ndaReports: Report[] = ndaReportsData?.data ?? [];
 
   const fetchPdfBlob = async (contract: any) => {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/contracts/${contract.companyId}/pdf`, {
@@ -167,7 +166,7 @@ export function DashboardContainer() {
     if (stagedFiles.length === 0 || !selectedCompanyId) return;
     try {
       for (const file of stagedFiles) {
-        await uploadMutation.mutateAsync({ companyId: selectedCompanyId, file, dto: {} });
+        await uploadMutation.mutateAsync({ companyId: selectedCompanyId, file, dto: { type: 'NDA' } });
       }
       setIsUploadModalOpen(false);
       setStagedFiles([]);
@@ -176,11 +175,7 @@ export function DashboardContainer() {
     }
   };
 
-  const pendingNdas = vendorCompanies.filter((company: any) => {
-    const status = company.ndaStatus?.toLowerCase();
-    const isSelectedCompany = activeWorkspace ? company.id === activeWorkspace.id : true;
-    return isSelectedCompany && !company.ndaUrl && (status === 'sent' || status === 'pending' || !company.ndaStatus);
-  });
+  const actionRequiredNdaReports = ndaReports.filter((report) => report.status === 'pending' || report.status === 'rejected' || !report.status);
 
   return (
     <AppShell>
@@ -329,97 +324,37 @@ export function DashboardContainer() {
 
         {!isAdmin && (
           <>
-            {pendingNdas.length > 0 && (
+            {actionRequiredNdaReports.length > 0 && (
               <div className="border border-amber-200 bg-amber-50/60 rounded-2xl p-5 shadow-sm relative overflow-hidden mb-6">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500" />
-                <div className="flex gap-4">
-                  <div className="p-2 bg-amber-100 text-amber-700 rounded-xl h-fit">
-                    <AlertTriangle className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-3 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-sm font-bold text-slate-900">Action Required: Sign NDA Agreements</h3>
-                      <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        High Priority
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-600 max-w-3xl leading-relaxed">
-                      Please complete and upload your mutual nondisclosure agreement to activate full service integrations for the workspace.
-                    </p>
-
-                    {pendingNdas.map((company: any) => (
-                      <div key={company.id} className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm mt-2">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-teal-50 text-teal-600 rounded-lg">
-                            <FileText className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-bold text-slate-800">Mutual NDA - {company.name}</h4>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[11px] text-slate-400">{company.sentDate || 'Date pending'}</span>
-                              <span className="text-rose-500 font-bold text-[11px] flex items-center gap-1">
-                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" /> {company.statusDisplay || 'Awaiting Signature'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" className="border-slate-200 text-slate-700 hover:bg-slate-50 gap-1.5 text-xs font-semibold rounded-lg shadow-sm">
-                            <Download className="h-3.5 w-3.5" /> Download
-                          </Button>
-                          <Button
-                            size="sm"
-                            disabled={uploadMutation.isPending}
-                            onClick={() => {
-                              setSelectedCompanyId(company.id);
-                              setIsUploadModalOpen(true);
-                            }}
-                            className="bg-primary hover:bg-primary/90 text-white gap-1.5 text-xs font-semibold rounded-lg shadow-sm"
-                          >
-                            {uploadMutation.isPending ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Upload className="h-3.5 w-3.5" />
-                            )}
-                            Upload signed copy
-                          </Button>
-                        </div>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-amber-100 text-amber-700 rounded-xl h-fit">
+                        <AlertTriangle className="h-5 w-5" />
                       </div>
-                    ))}
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">Action Required: Pending NDA Reports</h3>
+                        <p className="text-xs text-slate-600 max-w-3xl leading-relaxed">
+                          Please complete the pending NDA documents below to keep your workspace in good standing.
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      High Priority
+                    </span>
                   </div>
                 </div>
               </div>
             )}
-
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-              <h3 className="text-base font-bold text-slate-900 mb-4">Report History</h3>
-              {reportsLoading ? (
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              ) : (
-                <div className="space-y-3">
-                  {Array.isArray(ndaReports) && ndaReports.map((report) => (
-                    <div key={report.id} className="flex items-center justify-between p-4 border border-slate-100 rounded-xl bg-slate-50/50">
-                      <div>
-                        <p className="text-sm font-bold text-slate-800">{report.fileName}</p>
-                        <p className="text-xs text-slate-500">Status: {report.status}</p>
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${report.status === 'signed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                        {report.status}
-                      </span>
-                    </div>
-                  ))}
-                  {ndaReports.length === 0 && <p className="text-sm text-slate-400">No reports found.</p>}
-                </div>
-              )}
-            </div>
 
             {activeWorkspace && (
               <Card className="border border-slate-100 shadow-sm bg-white rounded-2xl mt-4">
                 <div className="p-5 border-b border-slate-100 flex items-center gap-2">
                   <FileText className="h-5 w-5 text-primary" />
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Uploaded Reports</h3>
-                    <p className="text-xs text-slate-400">Reports uploaded for {activeWorkspace.name}</p>
+                    <h3 className="text-base font-bold text-slate-900">NDA Documents</h3>
+                    <p className="text-xs text-slate-400">Manage and sign your NDA documents for {activeWorkspace.name}</p>
                   </div>
                 </div>
                 <CardContent className="p-6">
