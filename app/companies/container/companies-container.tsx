@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button, Input, Table } from "@/shared/ui";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Plus, Search, Trash2, Users, FileText, MoreVertical } from "lucide-react"; 
+import { Pencil, Plus, Search, Trash2, Users, MoreVertical } from "lucide-react"; 
 import { toast } from "sonner";
 import { format } from "date-fns";
 import NiceModal from "@ebay/nice-modal-react";
@@ -13,7 +13,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -35,7 +34,6 @@ export function CompaniesContainer() {
   const [page, setPage] = useState(1);
   const router = useRouter();
 
-  // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => {
       setPage(1);
@@ -44,7 +42,6 @@ export function CompaniesContainer() {
     return () => clearTimeout(handler);
   }, [search]);
 
-  // React Query hook
   const { data, isLoading, isFetching } = useCompaniesQuery({
     search: debouncedSearch || undefined,
     page,
@@ -71,8 +68,7 @@ export function CompaniesContainer() {
   async function handleDelete(id: string) {
     NiceModal.show(ConfirmationDeleteModal, {
       title: "Confirm Delete ?",
-      description:
-        "Are you sure want to delete this company? All vendor assigned will be removed.",
+      description: "Are you sure want to delete this company? All vendor assigned will be removed.",
       mutation: deleteMutation,
       payload: id,
       successMessage: "Company deleted",
@@ -86,6 +82,7 @@ export function CompaniesContainer() {
       },
     });
   }
+
   const loading = isLoading || isFetching;
 
   return (
@@ -93,9 +90,7 @@ export function CompaniesContainer() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-normal">Companies</h1>
-          <p className="text-muted-foreground">
-            Manage companies and vendor assignments
-          </p>
+          <p className="text-muted-foreground">Manage companies and vendor assignments</p>
         </div>
         <Button size="sm" onClick={openCreate} className="bg-primary">
           <Plus className="mr-2 h-4 w-4" />
@@ -104,32 +99,32 @@ export function CompaniesContainer() {
       </div>
 
       <Card className="border-blue-100 shadow-sm">
-        <CardHeader className="pb-3">
-            <Input
-              placeholder="Search companies..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="max-w-sm pl-4"
-              startIcon={<Search className="h-4 w-4 text-muted-foreground" />}
-            />
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
+          <Input
+            placeholder="Search companies..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-sm"
+            startIcon={<Search className="h-4 w-4 text-muted-foreground" />}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="border-blue-100 shadow-sm">
+        <CardContent className="pt-6">
           <Table<CompanyRow>
             columns={[
               {
                 key: "name",
                 header: "Name",
                 render: (company) => (
-                  <div className="flex items-center gap-2">
-        
-                    <button
-        type="button"
-        onClick={() => router.push(`/companies/${company.id}`)}
-        className="font-medium text-slate-900 hover:text-primary hover:underline transition-all text-left focus:outline-none"
-      >
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/companies/${company.id}`)}
+                    className="font-medium text-slate-900 hover:text-primary hover:underline transition-all text-left focus:outline-none"
+                  >
                     {company.name}
-                    </button>
-                  </div>
+                  </button>
                 ),
                 className: "font-medium",
               },
@@ -137,11 +132,7 @@ export function CompaniesContainer() {
                 key: "status",
                 header: "Status",
                 render: (company) => (
-                  <Badge
-                    variant={
-                      company.status === "active" ? "default" : "secondary"
-                    }
-                  >
+                  <Badge variant={company.status === "active" ? "default" : "secondary"}>
                     {company.status}
                   </Badge>
                 ),
@@ -153,7 +144,7 @@ export function CompaniesContainer() {
                   company.vendor?.name ?
                   <span className="flex items-center gap-1 text-sm">
                     <Users className="h-3 w-3" />
-                    {company.vendor?.name }
+                    {company.vendor?.name}
                   </span> :
                   <span>N/A</span>
                 ),
@@ -161,8 +152,7 @@ export function CompaniesContainer() {
               {
                 key: "created_at",
                 header: "Created",
-                render: (company) =>
-                  format(new Date(company.created_at), "MMM d, yyyy"),
+                render: (company) => format(new Date(company.created_at), "MMM d, yyyy"),
                 className: "text-muted-foreground",
               },
               {
@@ -175,7 +165,6 @@ export function CompaniesContainer() {
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreVertical className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
@@ -205,11 +194,7 @@ export function CompaniesContainer() {
             onPageChange={setPage}
             itemName="companies"
             loading={loading}
-            emptyMessage={
-              search
-                ? "No companies match your search"
-                : "No companies yet. Create one to get started."
-            }
+            emptyMessage={search ? "No companies match your search" : "No companies yet. Create one to get started."}
           />
         </CardContent>
       </Card>

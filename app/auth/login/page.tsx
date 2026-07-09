@@ -32,21 +32,22 @@ export default function LoginPage() {
       setError(null);
       setLoading(true);
       
-      try{
-      const result = await signIn(values.email, values.password);
-      const signInError = result?.error;
-      const mustChangePassword = result?.mustChangePassword;
-      const roles = result?.roles;
-      if (signInError) {
-        setError(signInError);
-        setLoading(false);
-      } 
+      try {
+        const result = await signIn(values.email, values.password);
+        const signInError = result?.error;
+        const mustChangePassword = result?.mustChangePassword;
+        
+        if (signInError) {
+          setError(signInError);
+          setLoading(false);
+          return;
+        } 
+        
         await new Promise((resolve) => setTimeout(resolve, 500));
-        router.push(mustChangePassword ? "/auth/set-password" : roles === "vendor" ? "/vendor/dashboard" : "/dashboard");
-      } catch (err:any){
+        router.push(mustChangePassword ? "/auth/set-password" : "/dashboard");
+      } catch (err: any) {
         setError(err?.message || "Unexpected error occured");
-      }
-      finally{
+      } finally {
         setLoading(false);
       }
     },
@@ -56,7 +57,6 @@ export default function LoginPage() {
     <div className="min-h-screen grid bg-white lg:grid-cols-[minmax(420px,60%)_1fr]">
       <section className="hidden bg-primary px-10 py-16 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="max-w-md">
-         
           <h1 className="text-5xl font-bold leading-tight tracking-normal">Hello Devforger!!</h1>
           <p className="mt-6 text-xl font-medium">A place where technology meets standards!!</p>
         </div>
@@ -66,15 +66,15 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <div className="flex justify-center mb-3">
-    <Image 
-      src="/logo.png" 
-      alt="Devforge Logo" 
-      className="object-contain"
-      width={130}
-      height={32}
-      priority
-    />
-  </div>
+              <Image 
+                src="/logo.png" 
+                alt="Devforge Logo" 
+                className="object-contain"
+                width={130}
+                height={32}
+                priority
+              />
+            </div>
             <p className="text-muted-foreground mt-1">Sign in to your workspace</p>
           </div>
 

@@ -12,7 +12,10 @@ export interface Company {
   created_at: string;
   updated_at: string;
   vendor_count?: number;
-  vendor?: User
+  vendor?: User;
+  ndaUrl?: string | null;
+  ndaStatus?: string | null;
+  reports?: any[];
 }
 
 export interface Referral {

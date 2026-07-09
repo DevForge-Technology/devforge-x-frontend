@@ -241,8 +241,8 @@ export default function ProfilePage() {
                         <img src={company.logo} alt="" className="h-8 w-8 rounded" />
                       ) : (
                         <div
-                          className="h-8 w-8 rounded flex items-center justify-center text-sm font-medium text-white"
-                          style={{ backgroundColor: company.accent_color || "#0B5DF4" }}
+                          className="h-8 w-8 rounded flex items-center justify-center bg-primary text-sm font-medium text-white"
+                        
                         >
                           {company.name.charAt(0)}
                         </div>

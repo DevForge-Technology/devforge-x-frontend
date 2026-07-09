@@ -6,7 +6,14 @@ import { usersBuilder } from './builders/users';
 import { companiesBuilder } from './builders/companies';
 import { referralsBuilder } from './builders/referrals';
 import { reportsBuilder } from './builders/reports';
+import { contractsBuilder } from './builders/contracts';
 import { toCompany, toProfile, toReferral, type Profile, type Company, type Referral } from '../types';
+import axios from 'axios';
+
+export const client = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  withCredentials: true,
+});
 
 export async function createVendor(name: string, email: string, companyIds: string[] = []) {
   const { user } = await usersBuilder.create({ name, email, companyIds });
@@ -176,3 +183,15 @@ export async function deleteReport(reportId: string) {
   return reportsBuilder.delete(reportId);
 }
 
+export async function createContract(data: any) {
+  const { contract } = await contractsBuilder.create(data);
+  return { contract };
+}
+
+export async function getContractsByCompany(companyId: string) {
+  return contractsBuilder.getByCompany(companyId);
+}
+
+export async function getContractsByVendor(vendorId: string) {
+  return contractsBuilder.getByVendor(vendorId);
+}

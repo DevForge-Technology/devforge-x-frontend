@@ -22,6 +22,9 @@ export interface Company {
   logo: string | null;
   accentColor: string | null;
   status: 'active' | 'inactive';
+  ndaUrl?: string | null;
+  ndaStatus?: 'pending' | 'uploaded' | 'signed' | 'rejected';
+  ndaSentAt?: string | null;
   createdAt: string;
   updatedAt: string;
   vendorCount?: number;

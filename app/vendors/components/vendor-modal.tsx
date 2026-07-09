@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -112,6 +112,7 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
           {
             onSuccess: () => {
               toast.success("Vendor created and credentials emailed");
+              formik.resetForm();
               modal.resolve(true);
               modal.hide();
             },
@@ -124,6 +125,13 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
       }
     },
   });
+
+  useEffect(() => {
+    if (modal.visible && !editingVendor) {
+      formik.resetForm();
+      setCompanySearch("");
+    }
+  }, [modal.visible, editingVendor]);
 
   const selectedCompanies = useMemo(
     () => companyOptions.filter((company: Company) => formik.values.companyIds.includes(company.id)),
@@ -252,7 +260,7 @@ export const VendorModal = NiceModal.create(({ editingVendor }: VendorModalProps
               type="submit"
               className="w-full bg-primary"
               loading={isSubmitting}
-              disabled={isSubmitting || !formik.dirty}
+              disabled={isSubmitting || (!formik.dirty && !editingVendor)}
             >
               {editingVendor ? "Update Vendor" : "Create Vendor"}
             </Button>

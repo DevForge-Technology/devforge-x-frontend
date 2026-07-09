@@ -12,12 +12,18 @@ export interface Report {
   sentAt?: string;
   createdAt: string;
   updatedAt: string;
+  status?: 'pending' | 'uploaded' | 'signed' | 'rejected' | string;
+  type?: 'GENERAL' | 'NDA' | string;
 }
 
 export const reportsBuilder = {
-  upload: async (companyId: string, file: File) => {
+  upload: async (companyId: string, file: File, type: 'GENERAL' | 'NDA' = 'GENERAL', reportId?: string) => {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('type', type);
+    if (reportId) {
+      formData.append('reportId', reportId);
+    }
 
     const { data } = await apiService.post<Report>(`/reports/upload/${companyId}`, formData, {
       headers: {
@@ -29,7 +35,7 @@ export const reportsBuilder = {
 
   getCompanyReports: async (
     companyId: string,
-    params?: { page?: number; page_size?: number },
+    params?: { page?: number; page_size?: number; type?: 'GENERAL' | 'NDA' },
   ) => {
     const { data } = await apiService.get<{
       data: Report[];
@@ -38,8 +44,10 @@ export const reportsBuilder = {
     return data;
   },
 
-  delete: async (reportId: string) => {
-    const { data } = await apiService.delete<{ success: boolean }>(`/reports/${reportId}`);
+  delete: async (reportId: string, action?: 'reset' | 'delete') => {
+    const { data } = await apiService.delete<{ success: boolean }>(`/reports/${reportId}`, {
+      params: { action },
+    });
     return data;
   },
 

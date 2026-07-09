@@ -3,7 +3,7 @@ import { reportsBuilder, Report } from '../builders/reports';
 
 export function useCompanyReportsQuery(
   companyId: string,
-  params?: { page?: number; page_size?: number },
+  params?: { page?: number; page_size?: number; type?: 'GENERAL' | 'NDA' },
   options?: { enabled?: boolean },
 ) {
   return useQuery({
@@ -18,25 +18,39 @@ export function useUploadReportMutation(
   options?: UseMutationOptions<
     Report,
     Error,
-    { companyId: string; file: File; dto: Record<string, never> }
+    { companyId: string; file: File; dto?: { type?: 'GENERAL' | 'NDA'; reportId?: string } }
   >,
 ) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ companyId, file }) => reportsBuilder.upload(companyId, file),
-    onSuccess: (data: Report) => {
-      qc.invalidateQueries({ queryKey: ['reports', data.companyId] });
+    mutationFn: ({ companyId, file, dto }) => reportsBuilder.upload(companyId, file, dto?.type ?? 'GENERAL', dto?.reportId),
+    onSuccess: (data: Report, variables) => {
+      const targetCompanyId = variables.companyId || data?.companyId;
+      if (targetCompanyId) {
+        qc.invalidateQueries({ 
+          queryKey: ['reports', targetCompanyId],
+          exact: false,
+        });
+      } else {
+        qc.invalidateQueries({ queryKey: ['reports'] });
+      }
     },
     ...options,
   });
 }
 
 export function useDeleteReportMutation(
-  options?: UseMutationOptions<{ success: boolean }, Error, string>,
+  options?: UseMutationOptions<{ success: boolean }, Error, string | { reportId: string; action?: 'reset' | 'delete' }>,
 ) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: reportsBuilder.delete,
+    mutationFn: (variables) => {
+      if (typeof variables === 'string') {
+        return reportsBuilder.delete(variables);
+      } else {
+        return reportsBuilder.delete(variables.reportId, variables.action);
+      }
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['reports'] });
     },
